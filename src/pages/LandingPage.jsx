@@ -3,8 +3,8 @@ import Header from '../components/Header';
 import Hero from '../components/Hero';
 import Features from '../components/Features';
 import Footer from '../components/Footer';
-import LoginModal from '../components/LoginModal';
-import RegisterModal from '../components/RegisterModal';
+import Login from '../components/Login';
+import Register from '../components/Register';
 
 const LandingPage = () => {
     const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -30,12 +30,12 @@ const LandingPage = () => {
                 <Features />
             </main>
             <Footer />
-            <LoginModal
+            <Login
                 isOpen={isLoginOpen}
                 onClose={closeLogin}
                 onSwitchToRegister={openRegister}
             />
-            <RegisterModal
+            <Register
                 isOpen={isRegisterOpen}
                 onClose={closeRegister}
                 onSwitchToLogin={openLogin}

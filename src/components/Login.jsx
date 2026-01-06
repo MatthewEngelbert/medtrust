@@ -1,8 +1,18 @@
 import React from 'react';
-import './LoginModal.css'; // Reuse styles
+import { useNavigate } from 'react-router-dom';
+import './Login.css';
 
-const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
+const Login = ({ isOpen, onClose, onSwitchToRegister }) => {
+    const navigate = useNavigate();
+
     if (!isOpen) return null;
+
+    const handleLogin = (e) => {
+        e.preventDefault();
+        // Simulate login
+        onClose();
+        navigate('/dashboard', { replace: true });
+    };
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -10,15 +20,10 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 <button className="modal-close" onClick={onClose}>&times;</button>
 
                 <div className="modal-header">
-                    <h2 className="modal-title">Create Account</h2>
+                    <h2 className="modal-title">Welcome Back</h2>
                 </div>
 
-                <form className="login-form" onSubmit={e => e.preventDefault()}>
-                    <div className="form-group">
-                        <label htmlFor="name">Full Name</label>
-                        <input type="text" id="name" placeholder="Your Name" />
-                    </div>
-
+                <form className="login-form" onSubmit={handleLogin}>
                     <div className="form-group">
                         <label htmlFor="email">Email Address</label>
                         <input type="email" id="email" placeholder="Your Email" />
@@ -29,17 +34,13 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                         <input type="password" id="password" placeholder="••••••••" />
                     </div>
 
-                    <div className="form-group">
-                        <label htmlFor="confirm-password">Confirm Password</label>
-                        <input type="password" id="confirm-password" placeholder="••••••••" />
-                    </div>
-
                     <button type="submit" className="btn btn-primary btn-block">
-                        Sign Up
+                        Login
                     </button>
 
                     <div className="modal-footer">
-                        <p>Already have an account? <a href="#" style={{ color: '#009149', fontWeight: '600' }} onClick={(e) => { e.preventDefault(); onSwitchToLogin(); }}>Login</a></p>
+                        <a href="#" className="forgot-password">Forgot Password?</a>
+                        <p>Don't have an account? <a href="#" style={{ color: '#009149', fontWeight: '600' }} onClick={(e) => { e.preventDefault(); onSwitchToRegister(); }}>Sign up</a></p>
                     </div>
                 </form>
             </div>
@@ -47,4 +48,4 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     );
 };
 
-export default RegisterModal;
+export default Login;
