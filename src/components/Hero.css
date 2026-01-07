@@ -5,34 +5,19 @@
     position: relative;
     overflow: hidden;
     padding-top: 80px;
-    background: var(--color-bg);
+    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), url('../assets/hero-bg.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
-/*Background Shapes */
+/*Background Shapes - Removed or adjusted for cleaner look with image */
 .hero::before {
-    content: '';
-    position: absolute;
-    top: -20%;
-    right: -10%;
-    width: 50%;
-    height: 80%;
-    background: radial-gradient(circle, rgba(14, 165, 233, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
-    border-radius: 50%;
-    z-index: 0;
-    filter: blur(60px);
+    display: none;
 }
 
 .hero::after {
-    content: '';
-    position: absolute;
-    bottom: -10%;
-    left: -10%;
-    width: 40%;
-    height: 60%;
-    background: radial-gradient(circle, rgba(45, 212, 191, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
-    border-radius: 50%;
-    z-index: 0;
-    filter: blur(60px);
+    display: none;
 }
 
 .hero-content {
@@ -50,13 +35,13 @@
     line-height: 1.1;
     font-weight: 800;
     letter-spacing: -0.04em;
-    color: var(--color-secondary);
+    color: #ffffff;
     margin-bottom: 1.5rem;
 }
 
 .hero-subtitle {
     font-size: 1.25rem;
-    color: var(--color-text-muted);
+    color: #e2e8f0;
     max-width: 600px;
     margin: 0 auto 3rem;
     line-height: 1.6;
@@ -66,4 +51,15 @@
     display: flex;
     gap: 1rem;
     justify-content: center;
+}
+
+.hero-actions .btn-secondary {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.hero-actions .btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: #ffffff;
+    color: #ffffff;
 }
