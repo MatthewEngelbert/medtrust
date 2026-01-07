@@ -77,15 +77,15 @@
     letter-spacing: -0.02em;
 }
 
-/* Portfolio Styles */
-.portfolio-grid {
+/* Profile Styles */
+.profile-grid {
     display: grid;
     grid-template-columns: 350px 1fr;
     gap: 2rem;
     align-items: start;
 }
 
-.portfolio-card {
+.profile-card {
     background: white;
     border-radius: 1.5rem;
     padding: 2.5rem;
@@ -94,7 +94,7 @@
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.portfolio-card:hover {
+.profile-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
@@ -243,7 +243,7 @@
 }
 
 @media (max-width: 1024px) {
-    .portfolio-grid {
+    .profile-grid {
         grid-template-columns: 1fr;
     }
 }
@@ -252,7 +252,7 @@
     grid-column: 1 / -1;
 }
 
-/* Medical Records Styles */
+/* Records Styles */
 .records-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));

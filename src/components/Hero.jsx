@@ -6,10 +6,7 @@ const Hero = ({ onStartNowClick }) => {
         <section className="hero" id="home">
             <div className="container">
                 <div className="hero-content">
-                    <div className="hero-badge">
-                        <span></span>
-                        Blockchain Powered Healthcare
-                    </div>
+
 
                     <h1 className="hero-title">
                         Control your <span className="text-gradient">own</span> health

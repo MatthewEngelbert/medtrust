@@ -41,7 +41,7 @@ const Features = () => {
         <section className="section" id="features">
             <div className="container">
                 <div className="section-header">
-                    <h2 className="section-title">The Future of Medical Records</h2>
+                    <h2 className="section-title">You're in Control, All Secured</h2>
                     <p className="section-subtitle">
                         Built on the blockchain for unmatched security, privacy, and accessibility.
                     </p>

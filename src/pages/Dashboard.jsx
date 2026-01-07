@@ -134,8 +134,8 @@ const Dashboard = () => {
 
                 <section className="dashboard-view">
                     {activeTab === 'profile' && (
-                        <div className="portfolio-grid">
-                            <div className="portfolio-card main-info">
+                        <div className="profile-grid">
+                            <div className="profile-card main-info">
                                 <div className="profile-image-wrapper">
                                     <img src={user.avatar} alt="Profile" className="profile-image" />
                                 </div>
@@ -146,7 +146,7 @@ const Dashboard = () => {
                                 </div>
                             </div>
 
-                            <div className="portfolio-card details-info">
+                            <div className="profile-card details-info">
                                 <h3 className="card-title">Personal Details</h3>
                                 <div className="details-grid">
                                     <div className="detail-item">
@@ -172,7 +172,7 @@ const Dashboard = () => {
                                 </div>
                             </div>
 
-                            <div className="portfolio-card visitations-info full-width-card">
+                            <div className="profile-card visitations-info full-width-card">
                                 <h3 className="card-title">Recent Visitations</h3>
                                 <div className="visitation-list">
                                     {visitations.map(visit => (
