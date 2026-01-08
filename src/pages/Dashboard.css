@@ -458,6 +458,13 @@
     box-shadow: 0 0 0 4px rgba(0, 145, 73, 0.1);
 }
 
+.form-input:disabled {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+    border-color: #e2e8f0;
+}
+
 .save-btn {
     grid-column: span 2;
     background-color: #009149;
