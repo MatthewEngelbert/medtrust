@@ -146,7 +146,11 @@ const PatientDashboard = ({ handleLogout }) => {
                         <div className="profile-grid">
                             <div className="profile-card main-info">
                                 <div className="profile-image-wrapper">
-                                    <img src={user.avatar} alt="Profile" className="profile-image" />
+                                    <img
+                                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=009149&color=fff&size=150`}
+                                        alt="Profile"
+                                        className="profile-image"
+                                    />
                                 </div>
                                 <h2 className="profile-name">{user.name}</h2>
                                 <p className="profile-title">{user.title}</p>
