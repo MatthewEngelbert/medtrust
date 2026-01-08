@@ -59,6 +59,22 @@
     gap: 1rem;
 }
 
+.nav-link.active {
+    color: #007038;
+    position: relative;
+}
+
+.nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #007038;
+    border-radius: 2px;
+}
+
 @media (max-width: 768px) {
     .nav-menu {
         display: none;

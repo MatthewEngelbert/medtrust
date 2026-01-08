@@ -3,12 +3,12 @@ import './Footer.css';
 
 const Footer = () => {
     return (
-        <footer className="footer">
+        <footer className="footer" id="about">
             <div className="container">
                 <div className="footer-content">
                     <div className="footer-brand">
                         <a href="#" className="logo" style={{ color: 'white' }}>
-                            Med<span>trust</span>
+                            Med<span>Trust</span>
                         </a>
                         <p className="footer-desc">
                             Empowering individuals with secure, blockchain-based access to their own medical history.
@@ -37,7 +37,7 @@ const Footer = () => {
                 </div>
 
                 <div className="footer-bottom">
-                    <p>&copy; {new Date().getFullYear()} Medtrust Inc. All rights reserved.</p>
+                    <p>&copy; {new Date().getFullYear()} MedTrust Inc. All rights reserved.</p>
                 </div>
             </div>
         </footer>
