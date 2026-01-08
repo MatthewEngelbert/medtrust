@@ -53,10 +53,10 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, title, onLoginSuccess }) =
                         {!isDoctorLogin ? (
                             <>
                                 <p>Don't have an account? <a href="#" style={{ color: '#009149', fontWeight: '600' }} onClick={(e) => { e.preventDefault(); onSwitchToRegister(); }}>Sign up</a></p>
-                                <p><a href="#" style={{ color: '#0f172a', fontWeight: '500' }} onClick={(e) => { e.preventDefault(); setIsDoctorLogin(true); }}>Login as a doctor?</a></p>
+                                <p><a href="#" style={{ color: '#009149', fontWeight: '500' }} onClick={(e) => { e.preventDefault(); setIsDoctorLogin(true); }}>Login as a doctor?</a></p>
                             </>
                         ) : (
-                            <p><a href="#" style={{ color: '#0f172a', fontWeight: '500' }} onClick={(e) => { e.preventDefault(); setIsDoctorLogin(false); }}>Login as a patient?</a></p>
+                            <p><a href="#" style={{ color: '#009149', fontWeight: '500' }} onClick={(e) => { e.preventDefault(); setIsDoctorLogin(false); }}>Login as a patient?</a></p>
                         )}
                     </div>
                 </form>
