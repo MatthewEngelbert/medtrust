@@ -11,6 +11,7 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, title, onLoginSuccess }) =
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        setError(''); // Clear previous errors
 
         // Use hardcoded email/password for testing if inputs are empty? No, let's use real inputs.
         // Wait, the form inputs are uncontrolled in the original code (no value binding or useState).
@@ -46,11 +47,11 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, title, onLoginSuccess }) =
                     });
                 }
             } else {
-                alert(data.message || 'Login failed');
+                setError(data.message || 'Login failed');
             }
         } catch (error) {
             console.error('Login Error:', error);
-            alert('Server error. Please try again later.');
+            setError('Server error. Please try again later.');
         }
     };
 
