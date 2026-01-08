@@ -297,12 +297,7 @@ const PatientDashboard = ({ handleLogout }) => {
                                             className="form-input"
                                         />
                                     </div>
-                                    <div className="form-group">
-                                        <label>Wallet Connection</label>
-                                        <button type="button" className="connect-wallet-btn">
-                                            Connect Wallet
-                                        </button>
-                                    </div>
+
                                     <div className="form-group full-width">
                                         <label>Home Address</label>
                                         <textarea
