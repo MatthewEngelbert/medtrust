@@ -31,18 +31,48 @@ const PatientDashboard = ({ handleLogout }) => {
         }));
     };
 
-    const handleSaveProfile = (e) => {
+    const handleSaveProfile = async (e) => {
         e.preventDefault();
+        setSaveStatus('Saving...');
 
-        // Create updated user object with new avatar based on the name
-        const updatedUser = {
-            ...formData,
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=009149&color=fff&size=150`
-        };
+        try {
+            const response = await fetch('http://localhost:5000/update-profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: formData.email, // Identifier
+                    name: formData.name,
+                    age: formData.age,
+                    domicile: formData.domicile,
+                    phone: formData.phone,
+                    address: formData.address
+                })
+            });
 
-        setUser(updatedUser);
-        localStorage.setItem('userProfile', JSON.stringify(updatedUser)); // Save updated user with new avatar
-        setSaveStatus('Profile updated successfully!');
+            const data = await response.json();
+
+            if (response.ok) {
+                // Update local state with returned user data to stay in sync
+                const updatedUser = {
+                    ...data.user,
+                    name: data.user.username, // Remap backend username to frontend name
+                    phone: data.user.phoneNumber, // Remap backend phoneNumber
+                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user.username)}&background=009149&color=fff&size=150`
+                };
+
+                setUser(updatedUser);
+                setFormData(updatedUser); // Update form data to match confirmed backend data
+                localStorage.setItem('userProfile', JSON.stringify(updatedUser));
+
+                setSaveStatus('Profile updated successfully!');
+            } else {
+                setSaveStatus(data.message || 'Failed to update profile.');
+            }
+        } catch (error) {
+            console.error('Update Error:', error);
+            setSaveStatus('Server error. Please try again.');
+        }
+
         setTimeout(() => setSaveStatus(''), 3000);
     };
 

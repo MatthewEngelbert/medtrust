@@ -152,6 +152,59 @@ app.post('/signin', async (req, res) => {
     }
 });
 
+// --- 4. ROUTE UPDATE PROFILE ---
+app.put('/update-profile', async (req, res) => {
+    try {
+        const { email, name, age, domicile, phone, address, specialisation, licenseNumber } = req.body;
+
+        // Cari user berdasarkan email
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "User tidak ditemukan" });
+        }
+
+        // Update data
+        // Map frontend 'name' ke backend 'username' & 'fullName'
+        if (name) {
+            user.username = name;
+            user.fullName = name;
+        }
+        if (age) user.age = age;
+        if (domicile) user.domicile = domicile;
+        if (phone) user.phoneNumber = phone; // Map 'phone' ke 'phoneNumber'
+        if (address) user.address = address;
+
+        // Update dokter spesifik
+        if (user.role === 'doctor') {
+            if (specialisation) user.specialization = specialisation;
+            if (licenseNumber) user.licenseNumber = licenseNumber;
+        }
+
+        await user.save();
+
+        res.json({
+            message: "Profile berhasil diupdate!",
+            user: {
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                id: user.role === 'doctor' ? user.doctorId : user.patientId,
+                fullName: user.fullName,
+                age: user.age,
+                domicile: user.domicile,
+                phoneNumber: user.phoneNumber,
+                address: user.address,
+                specialization: user.specialization,
+                licenseNumber: user.licenseNumber
+            }
+        });
+
+    } catch (error) {
+        console.error("Update Profile Error:", error);
+        res.status(500).json({ message: "Gagal mengupdate profile" });
+    }
+});
+
 // --- JALANKAN SERVER ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server berjalan di port ${PORT}`));
