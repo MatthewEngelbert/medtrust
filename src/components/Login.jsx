@@ -41,9 +41,11 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, title, onLoginSuccess }) =
                     onLoginSuccess();
                 } else {
                     onClose();
+                    // Navigate based on detailed backend role
+                    const targetRole = data.user.role === 'doctor' ? 'hospital' : 'patient';
                     navigate('/dashboard', {
                         replace: true,
-                        state: { role: isDoctorLogin ? 'hospital' : 'patient' }
+                        state: { role: targetRole }
                     });
                 }
             } else {

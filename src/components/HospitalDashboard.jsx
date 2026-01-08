@@ -50,6 +50,11 @@ const HospitalDashboard = ({ handleLogout }) => {
         }
     };
 
+    const [doctor] = useState(() => {
+        const storedUser = JSON.parse(localStorage.getItem('userProfile'));
+        return storedUser || {};
+    });
+
     return (
         <div className="dashboard-container">
             <aside className="dashboard-sidebar">
@@ -131,7 +136,9 @@ const HospitalDashboard = ({ handleLogout }) => {
                                     borderRadius: '12px',
                                     border: '2px dashed #e2e8f0'
                                 }}>
-                                    <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#334155' }}>Welcome, Dr. Sarah Wijaya</h3>
+                                    <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#334155' }}>
+                                        Welcome, {doctor.fullName || doctor.name || 'Doctor'}
+                                    </h3>
                                     <p>Enter a patient's wallet address above to view their medical records and history.</p>
                                 </div>
                             )}
