@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
-const Login = ({ isOpen, onClose, onSwitchToRegister, title = "Welcome Back", onLoginSuccess }) => {
+const Login = ({ isOpen, onClose, onSwitchToRegister, title, onLoginSuccess }) => {
     const navigate = useNavigate();
+    const [isDoctorLogin, setIsDoctorLogin] = useState(false);
 
     if (!isOpen) return null;
 
@@ -14,9 +15,14 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, title = "Welcome Back", on
             onLoginSuccess();
         } else {
             onClose();
-            navigate('/dashboard', { replace: true });
+            navigate('/dashboard', {
+                replace: true,
+                state: { role: isDoctorLogin ? 'hospital' : 'patient' }
+            });
         }
     };
+
+    const displayTitle = title || (isDoctorLogin ? "Doctor Login" : "Welcome Back");
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -24,7 +30,7 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, title = "Welcome Back", on
                 <button className="modal-close" onClick={onClose}>&times;</button>
 
                 <div className="modal-header">
-                    <h2 className="modal-title">{title}</h2>
+                    <h2 className="modal-title">{displayTitle}</h2>
                 </div>
 
                 <form className="login-form" onSubmit={handleLogin}>
@@ -44,7 +50,14 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, title = "Welcome Back", on
 
                     <div className="modal-footer">
                         <a href="#" className="forgot-password">Forgot Password?</a>
-                        <p>Don't have an account? <a href="#" style={{ color: '#009149', fontWeight: '600' }} onClick={(e) => { e.preventDefault(); onSwitchToRegister(); }}>Sign up</a></p>
+                        {!isDoctorLogin ? (
+                            <>
+                                <p>Don't have an account? <a href="#" style={{ color: '#009149', fontWeight: '600' }} onClick={(e) => { e.preventDefault(); onSwitchToRegister(); }}>Sign up</a></p>
+                                <p><a href="#" style={{ color: '#0f172a', fontWeight: '500' }} onClick={(e) => { e.preventDefault(); setIsDoctorLogin(true); }}>Login as a doctor?</a></p>
+                            </>
+                        ) : (
+                            <p><a href="#" style={{ color: '#0f172a', fontWeight: '500' }} onClick={(e) => { e.preventDefault(); setIsDoctorLogin(false); }}>Login as a patient?</a></p>
+                        )}
                     </div>
                 </form>
             </div>
