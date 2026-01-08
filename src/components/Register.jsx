@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Login.css'; // Reuse styles
 
-const Register = ({ isOpen, onClose, onSwitchToLogin, role = 'patient' }) => {
+const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
+    const [selectedRole, setSelectedRole] = useState(null); // 'patient' or 'doctor'
     const [error, setError] = useState('');
     const [formData, setFormData] = useState({
         name: '',
@@ -21,7 +22,20 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, role = 'patient' }) => {
 
     if (!isOpen) return null;
 
-    const displayTitle = role === 'doctor' ? 'Doctor Registration' : 'Create Account';
+    // Title based on step
+    let displayTitle = 'Create Account';
+    let displaySubtitle = '';
+
+    if (step === 1) {
+        displayTitle = 'Choose Account Type';
+        displaySubtitle = 'Step 1 of 3: Select your role';
+    } else if (step === 2) {
+        displayTitle = 'Account Details';
+        displaySubtitle = 'Step 2 of 3: Basic Information';
+    } else if (step === 3) {
+        displayTitle = 'Complete Profile';
+        displaySubtitle = 'Step 3 of 3: Personal Information';
+    }
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -41,6 +55,12 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, role = 'patient' }) => {
         }
     };
 
+    const handleRoleSelect = (role) => {
+        setSelectedRole(role);
+        setStep(2);
+        setError('');
+    };
+
     const handleNext = (e) => {
         e.preventDefault();
 
@@ -53,7 +73,7 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, role = 'patient' }) => {
             setError('Passwords do not match');
             return;
         }
-        setStep(2);
+        setStep(3);
     };
 
     const handleSubmit = async (e) => {
@@ -61,7 +81,7 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, role = 'patient' }) => {
         setError('');
 
         // Validation for Doctor
-        if (role === 'doctor') {
+        if (selectedRole === 'doctor') {
             const licenseRegex = /^[a-zA-Z0-9]{10}$/;
             if (!licenseRegex.test(formData.licenseNumber)) {
                 setError('License Number must be exactly 10 alphanumeric characters.');
@@ -73,11 +93,11 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, role = 'patient' }) => {
             username: formData.name,
             email: formData.email,
             password: formData.password,
-            role: role, // Send role to backend
+            role: selectedRole,
             phone: formData.phone,
             address: formData.address,
             // Conditional fields
-            ...(role === 'doctor' ? {
+            ...(selectedRole === 'doctor' ? {
                 specialization: formData.specialization,
                 licenseNumber: formData.licenseNumber
             } : {
@@ -99,6 +119,21 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, role = 'patient' }) => {
                 alert(`Account created successfully! Your ID: ${data.id}. Please login.`);
                 onClose();
                 onSwitchToLogin();
+                // Reset state
+                setStep(1);
+                setSelectedRole(null);
+                setFormData({
+                    name: '',
+                    email: '',
+                    password: '',
+                    confirmPassword: '',
+                    age: '',
+                    domicile: '',
+                    phone: '',
+                    address: '',
+                    specialization: '',
+                    licenseNumber: ''
+                });
             } else {
                 setError(data.message || 'Registration failed');
             }
@@ -115,21 +150,100 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, role = 'patient' }) => {
 
                 <div className="modal-header">
                     <h2 className="modal-title">{displayTitle}</h2>
-                    <p className="modal-subtitle">
-                        {step === 1 ? 'Step 1 of 2: Account Details' : 'Step 2 of 2: Profile Information'}
-                    </p>
+                    <p className="modal-subtitle">{displaySubtitle}</p>
                 </div>
 
-                <form className="login-form" onSubmit={step === 1 ? handleNext : handleSubmit}>
+                <form className="login-form" onSubmit={step === 2 ? handleNext : (step === 3 ? handleSubmit : (e) => e.preventDefault())}>
                     {error && <div className="error-message">{error}</div>}
-                    {step === 1 ? (
+
+                    {/* STEP 1: ROLE SELECTION */}
+                    {step === 1 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+                            <button
+                                type="button"
+                                className="btn"
+                                style={{
+                                    padding: '1.5rem',
+                                    border: '2px solid #e2e8f0',
+                                    borderRadius: '12px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '1rem',
+                                    background: 'white',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    textAlign: 'left'
+                                }}
+                                onClick={() => handleRoleSelect('patient')}
+                                onMouseOver={(e) => e.currentTarget.style.borderColor = '#009149'}
+                                onMouseOut={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+                            >
+                                <div style={{
+                                    width: '50px',
+                                    height: '50px',
+                                    background: '#e6f4ea',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#009149'
+                                }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                </div>
+                                <div>
+                                    <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1e293b' }}>I am a Patient</h3>
+                                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Store and manage my own medical records</p>
+                                </div>
+                            </button>
+
+                            <button
+                                type="button"
+                                className="btn"
+                                style={{
+                                    padding: '1.5rem',
+                                    border: '2px solid #e2e8f0',
+                                    borderRadius: '12px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '1rem',
+                                    background: 'white',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    textAlign: 'left'
+                                }}
+                                onClick={() => handleRoleSelect('doctor')}
+                                onMouseOver={(e) => e.currentTarget.style.borderColor = '#009149'}
+                                onMouseOut={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+                            >
+                                <div style={{
+                                    width: '50px',
+                                    height: '50px',
+                                    background: '#e0f2fe',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#0284c7'
+                                }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+                                </div>
+                                <div>
+                                    <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1e293b' }}>I am a Doctor</h3>
+                                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Access patient records and provide care</p>
+                                </div>
+                            </button>
+                        </div>
+                    )}
+
+                    {/* STEP 2: ACCOUNT DETAILS (Former Step 1) */}
+                    {step === 2 && (
                         <>
                             <div className="form-group">
-                                <label htmlFor="name">Full Name {role === 'doctor' && '(inc. Gelar)'}</label>
+                                <label htmlFor="name">Full Name {selectedRole === 'doctor' && '(inc. Gelar)'}</label>
                                 <input
                                     type="text"
                                     id="name"
-                                    placeholder={role === 'doctor' ? "dr. Name, Sp..." : "Your Name"}
+                                    placeholder={selectedRole === 'doctor' ? "dr. Name, Sp..." : "Your Name"}
                                     value={formData.name}
                                     onChange={handleChange}
                                     required
@@ -172,13 +286,26 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, role = 'patient' }) => {
                                 />
                             </div>
 
-                            <button type="submit" className="btn btn-primary btn-block">
-                                Next Step
-                            </button>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <button
+                                    type="button"
+                                    className="btn btn-block"
+                                    style={{ backgroundColor: '#e2e8f0', color: '#1e293b', marginTop: '1rem' }}
+                                    onClick={() => setStep(1)}
+                                >
+                                    Back
+                                </button>
+                                <button type="submit" className="btn btn-primary btn-block">
+                                    Next Step
+                                </button>
+                            </div>
                         </>
-                    ) : (
+                    )}
+
+                    {/* STEP 3: PROFILE DETAILS (Former Step 2) */}
+                    {step === 3 && (
                         <>
-                            {role === 'doctor' ? (
+                            {selectedRole === 'doctor' ? (
                                 // DOCTOR SPECIFIC FIELDS
                                 <>
                                     <div className="form-group">
@@ -263,12 +390,12 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, role = 'patient' }) => {
                                     type="button"
                                     className="btn btn-block"
                                     style={{ backgroundColor: '#e2e8f0', color: '#1e293b', marginTop: '1rem' }}
-                                    onClick={() => setStep(1)}
+                                    onClick={() => setStep(2)}
                                 >
                                     Back
                                 </button>
                                 <button type="submit" className="btn btn-primary btn-block">
-                                    Create {role === 'doctor' ? 'Doctor' : 'Patient'} Account
+                                    Create {selectedRole === 'doctor' ? 'Doctor' : 'Patient'} Account
                                 </button>
                             </div>
                         </>
