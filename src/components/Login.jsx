@@ -8,17 +8,48 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, title, onLoginSuccess }) =
 
     if (!isOpen) return null;
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        // Simulate login
-        if (onLoginSuccess) {
-            onLoginSuccess();
-        } else {
-            onClose();
-            navigate('/dashboard', {
-                replace: true,
-                state: { role: isDoctorLogin ? 'hospital' : 'patient' }
+
+        // Use hardcoded email/password for testing if inputs are empty? No, let's use real inputs.
+        // Wait, the form inputs are uncontrolled in the original code (no value binding or useState).
+        // I need to get the values from the form.
+        const email = e.target.email.value;
+        const password = e.target.password.value;
+
+        try {
+            const response = await fetch('http://localhost:5000/signin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
             });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Map backend user to frontend expectations
+                const userProfile = {
+                    ...data.user,
+                    name: data.user.username // Frontend uses 'name', backend uses 'username'
+                };
+
+                localStorage.setItem('userProfile', JSON.stringify(userProfile));
+
+                if (onLoginSuccess) {
+                    onLoginSuccess();
+                } else {
+                    onClose();
+                    navigate('/dashboard', {
+                        replace: true,
+                        state: { role: isDoctorLogin ? 'hospital' : 'patient' }
+                    });
+                }
+            } else {
+                alert(data.message || 'Login failed');
+            }
+        } catch (error) {
+            console.error('Login Error:', error);
+            alert('Server error. Please try again later.');
         }
     };
 

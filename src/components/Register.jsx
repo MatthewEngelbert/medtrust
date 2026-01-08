@@ -27,12 +27,14 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
         setStep(2);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Save to localStorage to simulate backend persistence
+
+        // 1. Construct the data payload
         const userProfile = {
-            name: formData.name,
+            username: formData.name, // Mapping from 'name' to 'username' for backend
             email: formData.email,
+            password: formData.password,
             age: formData.age,
             domicile: formData.domicile,
             phone: formData.phone,
@@ -40,10 +42,29 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
             title: `Patient ID: #${Math.floor(1000000 + Math.random() * 9000000)}`,
             avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=009149&color=fff&size=150`
         };
-        localStorage.setItem('userProfile', JSON.stringify(userProfile));
 
-        onClose();
-        navigate('/dashboard', { replace: true });
+        try {
+            const response = await fetch('http://localhost:5000/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userProfile),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Account created successfully! Please login.');
+                onClose();
+                onSwitchToLogin(); // Navigate to Login so user can sign in
+            } else {
+                alert(data.message || 'Registration failed');
+            }
+        } catch (error) {
+            console.error('Error during registration:', error);
+            alert('Server error. Please try again later.');
+        }
     };
 
     return (
