@@ -1,4 +1,4 @@
-import SHA256 from 'crypto-js/sha256.js';
+import CryptoJS from 'crypto-js';
 
 class Block {
     constructor(index, timestamp, data, previousHash = '') {
@@ -11,7 +11,7 @@ class Block {
     }
 
     calculateHash() {
-        return SHA256(
+        return CryptoJS.SHA256(
             this.index +
             this.previousHash +
             this.timestamp +
