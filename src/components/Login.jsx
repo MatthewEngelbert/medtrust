@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
-const Login = ({ isOpen, onClose, onSwitchToRegister }) => {
+const Login = ({ isOpen, onClose, onSwitchToRegister, title = "Welcome Back", onLoginSuccess }) => {
     const navigate = useNavigate();
 
     if (!isOpen) return null;
@@ -10,8 +10,12 @@ const Login = ({ isOpen, onClose, onSwitchToRegister }) => {
     const handleLogin = (e) => {
         e.preventDefault();
         // Simulate login
-        onClose();
-        navigate('/dashboard', { replace: true });
+        if (onLoginSuccess) {
+            onLoginSuccess();
+        } else {
+            onClose();
+            navigate('/dashboard', { replace: true });
+        }
     };
 
     return (
@@ -20,7 +24,7 @@ const Login = ({ isOpen, onClose, onSwitchToRegister }) => {
                 <button className="modal-close" onClick={onClose}>&times;</button>
 
                 <div className="modal-header">
-                    <h2 className="modal-title">Welcome Back</h2>
+                    <h2 className="modal-title">{title}</h2>
                 </div>
 
                 <form className="login-form" onSubmit={handleLogin}>

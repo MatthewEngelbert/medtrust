@@ -34,6 +34,22 @@ const HospitalDashboard = ({ handleLogout }) => {
         }
     ];
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchedPatient, setSearchedPatient] = useState(null);
+
+    const handleSearch = () => {
+        // Simulate search
+        if (searchQuery) {
+            setSearchedPatient({
+                name: "Alexander Bennett",
+                id: "#8824192",
+                avatar: "https://ui-avatars.com/api/?name=Alexander+Bennett&background=009149&color=fff&size=150",
+                badge: "Verified Patient",
+                details: "Male, 34y"
+            });
+        }
+    };
+
     return (
         <div className="dashboard-container">
             <aside className="dashboard-sidebar">
@@ -86,67 +102,96 @@ const HospitalDashboard = ({ handleLogout }) => {
                                 <div className="form-group">
                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Search by Wallet Address</label>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <input type="text" placeholder="Enter patient wallet address (0x...)" className="form-input" style={{ flex: 1 }} />
-                                        <button className="save-btn" style={{ margin: 0, width: 'auto', padding: '0 1.5rem' }}>Search</button>
+                                        <input
+                                            type="text"
+                                            placeholder="Enter patient wallet address (0x...)"
+                                            className="form-input"
+                                            style={{ flex: 1 }}
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                        />
+                                        <button
+                                            className="save-btn"
+                                            style={{ margin: 0, width: 'auto', padding: '0 1.5rem' }}
+                                            onClick={handleSearch}
+                                        >
+                                            Search
+                                        </button>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Template Result Card */}
-                            <div className="profile-grid" style={{ marginTop: '2rem' }}>
-                                <div className="profile-card main-info">
-                                    <div className="profile-image-wrapper">
-                                        <img src="https://ui-avatars.com/api/?name=Alexander+Bennett&background=009149&color=fff&size=150" alt="Profile" className="profile-image" />
-                                    </div>
-                                    <h2 className="profile-name">Alexander Bennett</h2>
-                                    <p className="profile-title">Patient ID: #8824192</p>
-                                    <div className="profile-badges">
-                                        <span className="badge">Verified Patient</span>
-                                        <span className="badge" style={{ background: '#e0f2fe', color: '#0284c7' }}>Male, 34y</span>
-                                    </div>
+                            {!searchedPatient && (
+                                <div style={{
+                                    marginTop: '3rem',
+                                    textAlign: 'center',
+                                    color: '#64748b',
+                                    padding: '3rem',
+                                    background: '#f8fafc',
+                                    borderRadius: '12px',
+                                    border: '2px dashed #e2e8f0'
+                                }}>
+                                    <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#334155' }}>Welcome, Dr. Sarah Wijaya</h3>
+                                    <p>Enter a patient's wallet address above to view their medical records and history.</p>
                                 </div>
+                            )}
 
-                                <div className="profile-card details-info" style={{ width: '100%' }}>
-                                    <h3 className="card-title">Attached Medical Files</h3>
-                                    <div className="visitation-list">
-                                        <div className="visitation-item" style={{ alignItems: 'center' }}>
-                                            <div className="visitation-main">
-                                                <h4 style={{ marginBottom: '0.2rem' }}>Blood_Test_Results.pdf</h4>
-                                                <span className="visitation-dept">Uploaded: 12 Dec 2025</span>
-                                            </div>
-                                            <div className="visitation-meta">
-                                                <button className="view-details-btn" style={{ padding: '0.5rem 1rem' }}>View</button>
-                                            </div>
+                            {searchedPatient && (
+                                <div className="profile-grid" style={{ marginTop: '2rem' }}>
+                                    <div className="profile-card main-info">
+                                        <div className="profile-image-wrapper">
+                                            <img src={searchedPatient.avatar} alt="Profile" className="profile-image" />
                                         </div>
-                                        <div className="visitation-item" style={{ alignItems: 'center' }}>
-                                            <div className="visitation-main">
-                                                <h4 style={{ marginBottom: '0.2rem' }}>X-Ray_Chest.jpg</h4>
-                                                <span className="visitation-dept">Uploaded: 10 Nov 2025</span>
-                                            </div>
-                                            <div className="visitation-meta">
-                                                <button className="view-details-btn" style={{ padding: '0.5rem 1rem' }}>View</button>
-                                            </div>
+                                        <h2 className="profile-name">{searchedPatient.name}</h2>
+                                        <p className="profile-title">Patient ID: {searchedPatient.id}</p>
+                                        <div className="profile-badges">
+                                            <span className="badge">{searchedPatient.badge}</span>
+                                            <span className="badge" style={{ background: '#e0f2fe', color: '#0284c7' }}>{searchedPatient.details}</span>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="profile-card visitations-info full-width-card" style={{ gridColumn: 'span 2' }}>
-                                    <h3 className="card-title">Recent Visitations</h3>
-                                    <div className="visitation-list">
-                                        {visitations.map(visit => (
-                                            <div key={visit.id} className="visitation-item">
+
+                                    <div className="profile-card details-info" style={{ width: '100%' }}>
+                                        <h3 className="card-title">Attached Medical Files</h3>
+                                        <div className="visitation-list">
+                                            <div className="visitation-item" style={{ alignItems: 'center' }}>
                                                 <div className="visitation-main">
-                                                    <h4>{visit.hospital}</h4>
-                                                    <span className="visitation-dept">{visit.dept}</span>
+                                                    <h4 style={{ marginBottom: '0.2rem' }}>Blood_Test_Results.pdf</h4>
+                                                    <span className="visitation-dept">Uploaded: 12 Dec 2025</span>
                                                 </div>
                                                 <div className="visitation-meta">
-                                                    <span className="visitation-date">{visit.date}</span>
-                                                    <span className="status-badge">{visit.status}</span>
+                                                    <button className="view-details-btn" style={{ padding: '0.5rem 1rem' }}>View</button>
                                                 </div>
                                             </div>
-                                        ))}
+                                            <div className="visitation-item" style={{ alignItems: 'center' }}>
+                                                <div className="visitation-main">
+                                                    <h4 style={{ marginBottom: '0.2rem' }}>X-Ray_Chest.jpg</h4>
+                                                    <span className="visitation-dept">Uploaded: 10 Nov 2025</span>
+                                                </div>
+                                                <div className="visitation-meta">
+                                                    <button className="view-details-btn" style={{ padding: '0.5rem 1rem' }}>View</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="profile-card visitations-info full-width-card" style={{ gridColumn: 'span 2' }}>
+                                        <h3 className="card-title">Recent Visitations</h3>
+                                        <div className="visitation-list">
+                                            {visitations.map(visit => (
+                                                <div key={visit.id} className="visitation-item">
+                                                    <div className="visitation-main">
+                                                        <h4>{visit.hospital}</h4>
+                                                        <span className="visitation-dept">{visit.dept}</span>
+                                                    </div>
+                                                    <div className="visitation-meta">
+                                                        <span className="visitation-date">{visit.date}</span>
+                                                        <span className="status-badge">{visit.status}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
                         </>
                     )}
 

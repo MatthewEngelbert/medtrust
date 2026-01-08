@@ -4,14 +4,25 @@ import PatientDashboard from '../components/PatientDashboard';
 import HospitalDashboard from '../components/HospitalDashboard';
 import './Dashboard.css';
 
+import Login from '../components/Login';
+
 const Dashboard = () => {
     const navigate = useNavigate();
     // Default to 'patient' role
     const [role, setRole] = useState('patient');
+    const [isHospitalLoginOpen, setIsHospitalLoginOpen] = useState(false);
 
     const handleLogout = () => {
         // Clear any auth tokens
         navigate('/', { replace: true });
+    };
+
+    const handleSwitchToHospital = () => {
+        if (role === 'patient') {
+            setIsHospitalLoginOpen(true);
+        } else {
+            setRole('patient');
+        }
     };
 
     return (
@@ -22,10 +33,20 @@ const Dashboard = () => {
                 <HospitalDashboard handleLogout={handleLogout} />
             )}
 
+            <Login
+                isOpen={isHospitalLoginOpen}
+                onClose={() => setIsHospitalLoginOpen(false)}
+                title="Hospital Staff Login"
+                onLoginSuccess={() => {
+                    setRole('hospital');
+                    setIsHospitalLoginOpen(false);
+                }}
+            />
+
             {/* Temporary Dev Toggle Button */}
             {/* Delete Later */}
             <button
-                onClick={() => setRole(prev => prev === 'patient' ? 'hospital' : 'patient')}
+                onClick={handleSwitchToHospital}
                 style={{
                     position: 'fixed',
                     bottom: '20px',
