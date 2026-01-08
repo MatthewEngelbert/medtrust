@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 const BlockCard = ({ block }) => {
     const [expanded, setExpanded] = useState(false);
 
-    // Simple check for valid hash (assuming difficulty 2)
-    const isValid = block.hash.startsWith("00");
+    // Check for 4 leading zeros as per requirement
+    const isValid = block.hash.startsWith("0000");
     const borderColor = isValid ? "border-green-500" : "border-red-500";
     const bgColor = isValid ? "bg-green-50" : "bg-red-50";
 

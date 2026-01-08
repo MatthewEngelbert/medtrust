@@ -3,7 +3,7 @@ import Block from './Block.js';
 class Blockchain {
     constructor() {
         this.chain = [this.createGenesisBlock()];
-        this.difficulty = 2; // Low difficulty for demo purposes
+        this.difficulty = 4; // Difficulty set to 4 zeros as requested
     }
 
     createGenesisBlock() {
