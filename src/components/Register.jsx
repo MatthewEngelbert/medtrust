@@ -5,6 +5,7 @@ import './Login.css'; // Reuse styles
 const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
+    const [error, setError] = useState('');
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -20,15 +21,21 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.id]: e.target.value });
+        setError(''); // Clear error on change
     };
 
     const handleNext = (e) => {
         e.preventDefault();
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
         setStep(2);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
 
         // 1. Construct the data payload
         const userProfile = {
@@ -55,15 +62,19 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
             const data = await response.json();
 
             if (response.ok) {
+                // Success: keep alert for success or could use a success message, 
+                // but user asked for error handling. I'll stick to alert for success for now or simple close 
+                // to not overcomplicate, but let's keep success behavior as is or change to UI success if needed.
+                // The prompt specifically asked about ERRORs.
                 alert('Account created successfully! Please login.');
                 onClose();
                 onSwitchToLogin(); // Navigate to Login so user can sign in
             } else {
-                alert(data.message || 'Registration failed');
+                setError(data.message || 'Registration failed');
             }
         } catch (error) {
             console.error('Error during registration:', error);
-            alert('Server error. Please try again later.');
+            setError('Server error. Please try again later.');
         }
     };
 
@@ -82,6 +93,7 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
                 </div>
 
                 <form className="login-form" onSubmit={step === 1 ? handleNext : handleSubmit}>
+                    {error && <div className="error-message">{error}</div>}
                     {step === 1 ? (
                         <>
                             <div className="form-group">

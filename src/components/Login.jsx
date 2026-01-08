@@ -5,6 +5,7 @@ import './Login.css';
 const Login = ({ isOpen, onClose, onSwitchToRegister, title, onLoginSuccess }) => {
     const navigate = useNavigate();
     const [isDoctorLogin, setIsDoctorLogin] = useState(false);
+    const [error, setError] = useState('');
 
     if (!isOpen) return null;
 
@@ -65,6 +66,7 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, title, onLoginSuccess }) =
                 </div>
 
                 <form className="login-form" onSubmit={handleLogin}>
+                    {error && <div className="error-message">{error}</div>}
                     <div className="form-group">
                         <label htmlFor="email">Email Address</label>
                         <input type="email" id="email" placeholder="Your Email" />
