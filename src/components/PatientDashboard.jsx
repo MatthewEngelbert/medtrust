@@ -295,6 +295,8 @@ const PatientDashboard = ({ handleLogout }) => {
                                             value={formData.email}
                                             onChange={handleInputChange}
                                             className="form-input"
+                                            disabled
+                                            style={{ backgroundColor: '#f1f5f9', cursor: 'not-allowed', color: '#64748b' }}
                                         />
                                     </div>
 
