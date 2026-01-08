@@ -33,8 +33,15 @@ const PatientDashboard = ({ handleLogout }) => {
 
     const handleSaveProfile = (e) => {
         e.preventDefault();
-        setUser(formData);
-        localStorage.setItem('userProfile', JSON.stringify(formData));
+
+        // Create updated user object with new avatar based on the name
+        const updatedUser = {
+            ...formData,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=009149&color=fff&size=150`
+        };
+
+        setUser(updatedUser);
+        localStorage.setItem('userProfile', JSON.stringify(updatedUser)); // Save updated user with new avatar
         setSaveStatus('Profile updated successfully!');
         setTimeout(() => setSaveStatus(''), 3000);
     };
