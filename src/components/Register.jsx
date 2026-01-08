@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Login.css'; // Reuse styles
 
-const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
+const Register = ({ isOpen, onClose, onSwitchToLogin, role = 'patient' }) => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [error, setError] = useState('');
@@ -14,18 +14,41 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
         age: '',
         domicile: '',
         phone: '',
-        address: ''
+        address: '',
+        specialization: '', // Doctor only
+        licenseNumber: '' // Doctor only
     });
 
     if (!isOpen) return null;
 
+    const displayTitle = role === 'doctor' ? 'Doctor Registration' : 'Create Account';
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.id]: e.target.value });
-        setError(''); // Clear error on change
+        setError('');
+    };
+
+    const toTitleCase = (str) => {
+        return str.replace(/\w\S*/g, (txt) => {
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        });
+    };
+
+    const handleSpecializationBlur = (e) => {
+        const val = e.target.value;
+        if (val) {
+            setFormData(prev => ({ ...prev, specialization: toTitleCase(val) }));
+        }
     };
 
     const handleNext = (e) => {
         e.preventDefault();
+
+        if (formData.password.length < 6) {
+            setError('Password must be at least 6 characters long');
+            return;
+        }
+
         if (formData.password !== formData.confirmPassword) {
             setError('Passwords do not match');
             return;
@@ -37,38 +60,45 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
         e.preventDefault();
         setError('');
 
-        // 1. Construct the data payload
+        // Validation for Doctor
+        if (role === 'doctor') {
+            const licenseRegex = /^[a-zA-Z0-9]{10}$/;
+            if (!licenseRegex.test(formData.licenseNumber)) {
+                setError('License Number must be exactly 10 alphanumeric characters.');
+                return;
+            }
+        }
+
         const userProfile = {
-            username: formData.name, // Mapping from 'name' to 'username' for backend
+            username: formData.name,
             email: formData.email,
             password: formData.password,
-            age: formData.age,
-            domicile: formData.domicile,
+            role: role, // Send role to backend
             phone: formData.phone,
             address: formData.address,
-            title: `Patient ID: #${Math.floor(1000000 + Math.random() * 9000000)}`,
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=009149&color=fff&size=150`
+            // Conditional fields
+            ...(role === 'doctor' ? {
+                specialization: formData.specialization,
+                licenseNumber: formData.licenseNumber
+            } : {
+                age: formData.age,
+                domicile: formData.domicile
+            })
         };
 
         try {
             const response = await fetch('http://localhost:5000/signup', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(userProfile),
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                // Success: keep alert for success or could use a success message, 
-                // but user asked for error handling. I'll stick to alert for success for now or simple close 
-                // to not overcomplicate, but let's keep success behavior as is or change to UI success if needed.
-                // The prompt specifically asked about ERRORs.
-                alert('Account created successfully! Please login.');
+                alert(`Account created successfully! Your ID: ${data.id}. Please login.`);
                 onClose();
-                onSwitchToLogin(); // Navigate to Login so user can sign in
+                onSwitchToLogin();
             } else {
                 setError(data.message || 'Registration failed');
             }
@@ -84,11 +114,9 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
                 <button className="modal-close" onClick={onClose}>&times;</button>
 
                 <div className="modal-header">
-                    <h2 className="modal-title">
-                        {step === 1 ? 'Create Account' : 'Complete Profile'}
-                    </h2>
+                    <h2 className="modal-title">{displayTitle}</h2>
                     <p className="modal-subtitle">
-                        {step === 1 ? 'Step 1 of 2: Account Details' : 'Step 2 of 2: Personal Information'}
+                        {step === 1 ? 'Step 1 of 2: Account Details' : 'Step 2 of 2: Profile Information'}
                     </p>
                 </div>
 
@@ -97,11 +125,11 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
                     {step === 1 ? (
                         <>
                             <div className="form-group">
-                                <label htmlFor="name">Full Name</label>
+                                <label htmlFor="name">Full Name {role === 'doctor' && '(inc. Gelar)'}</label>
                                 <input
                                     type="text"
                                     id="name"
-                                    placeholder="Your Name"
+                                    placeholder={role === 'doctor' ? "dr. Name, Sp..." : "Your Name"}
                                     value={formData.name}
                                     onChange={handleChange}
                                     required
@@ -150,36 +178,68 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
                         </>
                     ) : (
                         <>
-                            <div className="form-group">
-                                <label htmlFor="age">Age</label>
-                                <input
-                                    type="number"
-                                    id="age"
-                                    placeholder="e.g. 34"
-                                    value={formData.age}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="domicile">Domicile</label>
-                                <input
-                                    type="text"
-                                    id="domicile"
-                                    placeholder="e.g. Jakarta, Indonesia"
-                                    value={formData.domicile}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
+                            {role === 'doctor' ? (
+                                // DOCTOR SPECIFIC FIELDS
+                                <>
+                                    <div className="form-group">
+                                        <label htmlFor="specialization">Specialization</label>
+                                        <input
+                                            type="text"
+                                            id="specialization"
+                                            placeholder="e.g. Cardiologist"
+                                            value={formData.specialization}
+                                            onChange={handleChange}
+                                            onBlur={handleSpecializationBlur}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label htmlFor="licenseNumber">License Number (10 Chars)</label>
+                                        <input
+                                            type="text"
+                                            id="licenseNumber"
+                                            placeholder="e.g. A1B2C3D4E5"
+                                            value={formData.licenseNumber}
+                                            onChange={handleChange}
+                                            maxLength={10}
+                                            required
+                                        />
+                                    </div>
+                                </>
+                            ) : (
+                                // PATIENT SPECIFIC FIELDS
+                                <>
+                                    <div className="form-group">
+                                        <label htmlFor="age">Age</label>
+                                        <input
+                                            type="number"
+                                            id="age"
+                                            placeholder="e.g. 34"
+                                            value={formData.age}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label htmlFor="domicile">Domicile</label>
+                                        <input
+                                            type="text"
+                                            id="domicile"
+                                            placeholder="e.g. Jakarta, Indonesia"
+                                            value={formData.domicile}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                    </div>
+                                </>
+                            )}
 
                             <div className="form-group">
                                 <label htmlFor="phone">Phone Number</label>
                                 <input
                                     type="tel"
                                     id="phone"
-                                    placeholder="e.g. +62 812-3456-7890"
+                                    placeholder="e.g. +62 812..."
                                     value={formData.phone}
                                     onChange={handleChange}
                                     required
@@ -187,11 +247,11 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="address">Home Address</label>
+                                <label htmlFor="address">Address</label>
                                 <input
                                     type="text"
                                     id="address"
-                                    placeholder="Full Street Address"
+                                    placeholder="Full Address"
                                     value={formData.address}
                                     onChange={handleChange}
                                     required
@@ -208,7 +268,7 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
                                     Back
                                 </button>
                                 <button type="submit" className="btn btn-primary btn-block">
-                                    Complete Setup
+                                    Create {role === 'doctor' ? 'Doctor' : 'Patient'} Account
                                 </button>
                             </div>
                         </>

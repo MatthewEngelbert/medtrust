@@ -9,6 +9,7 @@ import Register from '../components/Register';
 const LandingPage = () => {
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+    const [registerRole, setRegisterRole] = useState('patient'); // 'patient' | 'doctor'
 
     const openLogin = () => {
         setIsRegisterOpen(false);
@@ -16,7 +17,8 @@ const LandingPage = () => {
     };
     const closeLogin = () => setIsLoginOpen(false);
 
-    const openRegister = () => {
+    const openRegister = (role = 'patient') => {
+        setRegisterRole(role);
         setIsLoginOpen(false);
         setIsRegisterOpen(true);
     };
@@ -24,7 +26,7 @@ const LandingPage = () => {
 
     return (
         <>
-            <Header onLoginClick={openLogin} onSignUpClick={openRegister} />
+            <Header onLoginClick={openLogin} onSignUpClick={() => openRegister('patient')} />
             <main>
                 <Hero onStartNowClick={openLogin} />
                 <Features />
@@ -39,6 +41,7 @@ const LandingPage = () => {
                 isOpen={isRegisterOpen}
                 onClose={closeRegister}
                 onSwitchToLogin={openLogin}
+                role={registerRole}
             />
         </>
     );

@@ -7,8 +7,8 @@ const bcrypt = require('bcryptjs');
 const app = express();
 
 // --- MIDDLEWARE ---
-app.use(express.json()); 
-app.use(cors()); 
+app.use(express.json());
+app.use(cors());
 
 // --- KONEKSI KE MONGODB ---
 mongoose.connect(process.env.MONGO_URI)
@@ -20,18 +20,24 @@ mongoose.connect(process.env.MONGO_URI)
 const userSchema = new mongoose.Schema({
     // Wajib diisi saat daftar (Credentials)
     username: { type: String, required: true },
-    email:    { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    role: { type: String, enum: ['patient', 'doctor'], default: 'patient' },
 
     // Data Profil Tambahan (Boleh kosong dulu / required: false)
-    fullName:    { type: String, required: false }, // Contoh: Edwin
-    age:         { type: Number, required: false }, // Contoh: 34
-    domicile:    { type: String, required: false }, // Contoh: Jakarta, Indonesia
-    phoneNumber: { type: String, required: false }, // Contoh: +62 812...
-    address:     { type: String, required: false }, // Contoh: Jl. Jend Sudirman...
-    
-    // ID Pasien (Dibuat otomatis oleh sistem, bukan input user)
-    patientId:   { type: String, unique: true }     // Contoh: #8824192
+    fullName: { type: String, required: false },
+    age: { type: Number, required: false },
+    domicile: { type: String, required: false },
+    phoneNumber: { type: String, required: false },
+    address: { type: String, required: false },
+
+    // Khusus Dokter
+    specialization: { type: String },
+    licenseNumber: { type: String },
+
+    // ID Unik Berdasarkan Role
+    patientId: { type: String, unique: true, sparse: true }, // sparse: true agar null tidak dianggap duplikat
+    doctorId: { type: String, unique: true, sparse: true }
 });
 
 const User = mongoose.model('User', userSchema);
@@ -40,15 +46,18 @@ const User = mongoose.model('User', userSchema);
 app.post('/signup', async (req, res) => {
     try {
         // Ambil semua data dari frontend
-        const { 
-            username, 
-            email, 
+        const {
+            username,
+            email,
             password,
             fullName,
             age,
             domicile,
             phoneNumber,
-            address
+            address,
+            role, // 'patient' or 'doctor'
+            specialization,
+            licenseNumber
         } = req.body;
 
         // Cek email ganda
@@ -60,29 +69,41 @@ app.post('/signup', async (req, res) => {
         // Enkripsi password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // GENERATE PATIENT ID OTOMATIS
-        // Format: Tanda Pagar (#) + 6 digit angka random
-        const randomNumbers = Math.floor(100000 + Math.random() * 900000); 
-        const generatedPatientId = `#${randomNumbers}`;
-
-        // Masukkan data ke database
-        const newUser = new User({ 
-            username, 
-            email, 
+        // GENERATE ID SESUAI ROLE
+        const randomNumbers = Math.floor(100000 + Math.random() * 900000);
+        const userPayload = {
+            username,
+            email,
             password: hashedPassword,
             fullName,
-            age,
-            domicile,
             phoneNumber,
             address,
-            patientId: generatedPatientId 
-        });
-        
+            role: role || 'patient'
+        };
+
+        let generatedId = "";
+
+        if (role === 'doctor') {
+            generatedId = `DR#${randomNumbers}`;
+            userPayload.doctorId = generatedId;
+            userPayload.specialization = specialization;
+            userPayload.licenseNumber = licenseNumber;
+        } else {
+            // Default Patient
+            generatedId = `#${randomNumbers}`;
+            userPayload.patientId = generatedId;
+            userPayload.age = age;
+            userPayload.domicile = domicile;
+        }
+
+        // Masukkan data ke database
+        const newUser = new User(userPayload);
+
         await newUser.save();
 
-        res.status(201).json({ 
-            message: "User berhasil dibuat!", 
-            patientId: generatedPatientId // Kirim balik ID ke frontend kalau perlu
+        res.status(201).json({
+            message: "User berhasil dibuat!",
+            id: generatedId
         });
 
     } catch (error) {
@@ -109,18 +130,20 @@ app.post('/signin', async (req, res) => {
         }
 
         // Login sukses -> Kirim data user ke frontend untuk ditampilkan di Profile
-        res.json({ 
-            message: "Login berhasil!", 
-            user: { 
-                username: user.username, 
+        res.json({
+            message: "Login berhasil!",
+            user: {
+                username: user.username,
                 email: user.email,
-                patientId: user.patientId,
+                role: user.role,
+                id: user.role === 'doctor' ? user.doctorId : user.patientId,
                 fullName: user.fullName,
                 age: user.age,
                 domicile: user.domicile,
                 phoneNumber: user.phoneNumber,
-                address: user.address
-            } 
+                address: user.address,
+                specialization: user.specialization
+            }
         });
 
     } catch (error) {
