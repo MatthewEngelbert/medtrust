@@ -51,8 +51,6 @@ const HospitalDashboard = ({ handleLogout }) => {
                     badge: "Registered Patient",
                     details: `Patient, ${found.age ? found.age + 'y' : 'N/A'}`
                 });
-                // Fetch chain to find records for this patient
-                fetchChain();
             } else {
                 setSearchedPatient(null);
                 alert("Patient not found!");
@@ -263,42 +261,8 @@ const HospitalDashboard = ({ handleLogout }) => {
                                     </div>
 
                                     <div className="profile-card details-info" style={{ width: '100%' }}>
-                                        <h3 className="card-title">Blockchain Medical Records</h3>
-                                        {chainHistory
-                                            .filter(block =>
-                                                block.data.patientId === searchedPatient.id ||
-                                                block.data.patientId === `#${searchedPatient.id}` ||
-                                                block.data.patientId === searchedPatient.id.replace('#', '')
-                                            )
-                                            .length === 0 ? (
-                                            <p style={{ color: '#94a3b8' }}>No records found on the blockchain.</p>
-                                        ) : (
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                                {chainHistory
-                                                    .filter(block =>
-                                                        block.data.patientId === searchedPatient.id ||
-                                                        block.data.patientId === `#${searchedPatient.id}` ||
-                                                        block.data.patientId === searchedPatient.id.replace('#', '')
-                                                    )
-                                                    .map(block => (
-                                                        <div key={block.hash} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem', background: '#f8fafc' }}>
-                                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                                                <span style={{ fontWeight: 'bold', color: '#334155' }}>{block.data.diagnosis}</span>
-                                                                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{new Date(block.timestamp).toLocaleDateString()}</span>
-                                                            </div>
-                                                            <div style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '0.5rem' }}>
-                                                                {block.data.notes}
-                                                            </div>
-                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
-                                                                <span style={{ color: '#009149' }}>Dr. {block.data.doctor?.username || "Unknown"}</span>
-                                                                <span style={{ fontFamily: 'monospace', background: '#e2e8f0', padding: '2px 4px', borderRadius: '4px', fontSize: '0.7rem' }}>
-                                                                    Blk #{block.index}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                            </div>
-                                        )}
+                                        <h3 className="card-title">Attached Medical Files</h3>
+                                        <p>No new files.</p>
                                     </div>
                                 </div>
                             )}
