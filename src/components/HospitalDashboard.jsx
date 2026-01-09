@@ -12,6 +12,7 @@ const HospitalDashboard = ({ handleLogout }) => {
     const [formPatientId, setFormPatientId] = useState('');
     const [formDiagnosis, setFormDiagnosis] = useState('');
     const [formNotes, setFormNotes] = useState('');
+    const [formHospital, setFormHospital] = useState('');
 
     // Search States (Dashboard)
     const [searchQuery, setSearchQuery] = useState('');
@@ -62,8 +63,8 @@ const HospitalDashboard = ({ handleLogout }) => {
     };
 
     const handleMineAndUpload = async () => {
-        if (!formPatientId || !formDiagnosis) {
-            alert("Please fill in all fields (Patient ID and Diagnosis)");
+        if (!formPatientId || !formDiagnosis || !formHospital) {
+            alert("Please fill in all fields (Patient ID, Diagnosis, and Hospital)");
             return;
         }
 
@@ -89,8 +90,11 @@ const HospitalDashboard = ({ handleLogout }) => {
                         patientId: formPatientId,
                         diagnosis: formDiagnosis,
                         notes: formNotes,
+                        diagnosis: formDiagnosis,
+                        notes: formNotes,
                         department: "General Practice",
-                        doctor: { username: doctor.username, fullName: doctor.fullName }
+                        doctor: { username: doctor.username, fullName: doctor.fullName },
+                        hospital: formHospital
                     },
                     previousHash
                 );
@@ -338,6 +342,14 @@ const HospitalDashboard = ({ handleLogout }) => {
                                         <option>Dermatology</option>
                                         <option>Immunology</option>
                                     </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Hospital / Clinic</label>
+                                    <input
+                                        type="text" className="form-input"
+                                        value={formHospital} onChange={e => setFormHospital(e.target.value)}
+                                        placeholder="e.g. RS Medika Jaya Bekasi"
+                                    />
                                 </div>
                                 <div className="form-group full-width">
                                     <label>Diagnosis</label>
