@@ -69,8 +69,33 @@ app.post('/signup', async (req, res) => {
         // Enkripsi password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // GENERATE ID SESUAI ROLE
-        const randomNumbers = Math.floor(100000 + Math.random() * 900000);
+        // GENERATE UNIQUE ID LOOP
+        let generatedId = "";
+        let isUnique = false;
+        let attempts = 0;
+
+        while (!isUnique && attempts < 5) {
+            const randomNumbers = Math.floor(100000 + Math.random() * 900000);
+            if (role === 'doctor') {
+                generatedId = `DR#${randomNumbers}`;
+            } else {
+                generatedId = `#${randomNumbers}`;
+            }
+
+            // Check if ID exists in DB
+            const existingIdUser = await User.findOne(role === 'doctor' ? { doctorId: generatedId } : { patientId: generatedId });
+
+            if (!existingIdUser) {
+                isUnique = true;
+            }
+            attempts++;
+        }
+
+        if (!isUnique) {
+            return res.status(500).json({ message: "Gagal membuat ID unik, silakan coba lagi." });
+        }
+
+        // Setup user payload
         const userPayload = {
             username,
             email,
@@ -81,16 +106,11 @@ app.post('/signup', async (req, res) => {
             role: role || 'patient'
         };
 
-        let generatedId = "";
-
         if (role === 'doctor') {
-            generatedId = `DR#${randomNumbers}`;
             userPayload.doctorId = generatedId;
             userPayload.specialization = specialization;
             userPayload.licenseNumber = licenseNumber;
         } else {
-            // Default Patient
-            generatedId = `#${randomNumbers}`;
             userPayload.patientId = generatedId;
             userPayload.age = age;
             userPayload.domicile = domicile;
@@ -98,7 +118,6 @@ app.post('/signup', async (req, res) => {
 
         // Masukkan data ke database
         const newUser = new User(userPayload);
-
         await newUser.save();
 
         res.status(201).json({

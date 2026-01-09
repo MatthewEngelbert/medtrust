@@ -38,15 +38,22 @@ const HospitalDashboard = ({ handleLogout }) => {
     const [searchedPatient, setSearchedPatient] = useState(null);
 
     const handleSearch = () => {
-        // Simulate search
         if (searchQuery) {
-            setSearchedPatient({
-                name: "Alexander Bennett",
-                id: "#8824192",
-                avatar: "https://ui-avatars.com/api/?name=Alexander+Bennett&background=009149&color=fff&size=150",
-                badge: "Verified Patient",
-                details: "Male, 34y"
-            });
+            // Softcode: Find patient from the mock list
+            const found = patients.find(p => p.id.toString() === searchQuery.trim() || p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+            if (found) {
+                setSearchedPatient({
+                    name: found.name,
+                    id: `#${found.id}`,
+                    avatar: `https://ui-avatars.com/api/?name=${found.name.replace(' ', '+')}&background=009149&color=fff&size=150`,
+                    badge: "Verified Patient",
+                    details: `Patient, ${found.age}y`
+                });
+            } else {
+                alert("Patient not found!");
+                setSearchedPatient(null);
+            }
         }
     };
 
@@ -105,11 +112,11 @@ const HospitalDashboard = ({ handleLogout }) => {
                         <>
                             <div className="settings-card" style={{ width: '100%' }}>
                                 <div className="form-group">
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Search by Wallet Address</label>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Search by Patient ID</label>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                                         <input
                                             type="text"
-                                            placeholder="Enter patient wallet address (0x...)"
+                                            placeholder="Enter Patient ID"
                                             className="form-input"
                                             style={{ flex: 1 }}
                                             value={searchQuery}
@@ -137,9 +144,12 @@ const HospitalDashboard = ({ handleLogout }) => {
                                     border: '2px dashed #e2e8f0'
                                 }}>
                                     <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#334155' }}>
-                                        Welcome, {doctor.fullName || doctor.name || 'Doctor'}
+                                        Welcome, {(() => {
+                                            const name = doctor.fullName || doctor.name || doctor.username || 'Doctor';
+                                            return name.match(/^(dr\.|doctor)/i) ? name : `Dr. ${name}`;
+                                        })()}
                                     </h3>
-                                    <p>Enter a patient's wallet address above to view their medical records and history.</p>
+                                    <p>Enter a patient's ID above to view their medical records and history.</p>
                                 </div>
                             )}
 
@@ -245,10 +255,7 @@ const HospitalDashboard = ({ handleLogout }) => {
                         <div className="settings-card" style={{ width: '100%' }}>
                             <h3 className="card-title">New Patient Record</h3>
                             <form className="settings-form">
-                                <div className="form-group">
-                                    <label>Wallet Address</label>
-                                    <input type="text" className="form-input" placeholder="0x..." />
-                                </div>
+
                                 <div className="form-group">
                                     <label>Patient ID</label>
                                     <input type="text" className="form-input" />
