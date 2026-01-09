@@ -263,33 +263,38 @@ app.get('/chain', (req, res) => {
 });
 
 // POST /mine - Tambah blok baru (Record Medis)
+// POST /mine - Receive and Verify Client-Mined Block
 app.post('/mine', (req, res) => {
-    const { patientId, diagnosis, doctor, additionalData } = req.body;
+    // Expecting the full block object from client
+    const { index, timestamp, data, previousHash, hash, nonce } = req.body;
 
-    if (!patientId || !diagnosis) {
-        return res.status(400).json({ message: "Data tidak lengkap" });
+    // Basic Validation
+    if (index === undefined || !timestamp || !data || !hash || nonce === undefined) {
+        return res.status(400).json({ message: "Invalid block data" });
     }
 
-    const blockData = {
-        patientId,
-        diagnosis,
-        doctor,
-        additionalData,
-        timestamp: new Date().toISOString()
+    // Server-side Verification
+    const latestBlock = medTrustChain.getLatestBlock();
+
+    if (previousHash !== latestBlock.hash) {
+        return res.status(400).json({ message: "Block rejected: Previous hash mismatch. Please refresh chain." });
+    }
+
+    const newBlock = {
+        index,
+        timestamp,
+        data,
+        previousHash,
+        hash,
+        nonce
     };
 
-    const newBlock = new require('./blockchain/Block')(
-        medTrustChain.chain.length,
-        new Date().toISOString(),
-        blockData
-    );
+    medTrustChain.chain.push(newBlock);
 
-    console.log("⛏️  Mining block baru...");
-    medTrustChain.addBlock(newBlock);
-    console.log("✅ Block berhasil ditambahkan ke chain");
+    console.log(`✅ Block #${index} accepted from client! Hash: ${hash}`);
 
     res.json({
-        message: "Block berhasil ditambahkan!",
+        message: "Block accepted and added to chain",
         block: newBlock
     });
 });

@@ -73,39 +73,53 @@ const HospitalDashboard = ({ handleLogout }) => {
         // Use timeout to allow UI to render modal before heavy calculation
         setTimeout(async () => {
             try {
-                // 1. Client-Side Mining
+                // 1. Fetch Latest Chain State from Server
+                const chainResponse = await fetch('http://localhost:5000/chain');
+                const chainData = await chainResponse.json();
+                const latestBlock = chainData.chain[chainData.chain.length - 1];
+
+                const newIndex = chainData.chain.length;
+                const previousHash = latestBlock.hash;
+
+                // 2. Create Block with correct Previous Hash
                 const newBlock = new Block(
-                    0, // Index temporary
+                    newIndex,
                     new Date().toISOString(),
                     {
                         patientId: formPatientId,
                         diagnosis: formDiagnosis,
                         notes: formNotes,
+                        department: "General Practice",
                         doctor: { username: doctor.username, fullName: doctor.fullName }
-                    }
+                    },
+                    previousHash
                 );
 
-                // Difficulty 4
+                // 3. Client-Side Mining (PoW)
+                console.log("Start mining...", newBlock);
                 newBlock.mineBlock(4);
 
                 setMinedBlock(newBlock);
                 setMiningStep('success');
 
-                // 2. Sync to Server
-                await fetch('http://localhost:5000/mine', {
+                // 4. Sync to Server (Send COMPLETE block)
+                const uploadResponse = await fetch('http://localhost:5000/mine', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        patientId: formPatientId,
-                        diagnosis: formDiagnosis,
-                        doctor: doctor,
-                        additionalData: {
-                            notes: formNotes,
-                            clientHash: newBlock.hash,
-                            clientNonce: newBlock.nonce
-                        }
+                        index: newBlock.index,
+                        timestamp: newBlock.timestamp,
+                        data: newBlock.data,
+                        previousHash: newBlock.previousHash,
+                        hash: newBlock.hash,
+                        nonce: newBlock.nonce
                     })
                 });
+
+                if (!uploadResponse.ok) {
+                    const errData = await uploadResponse.json();
+                    throw new Error(errData.message || "Server rejected block");
+                }
 
                 // Clear form
                 setFormPatientId('');
@@ -114,7 +128,7 @@ const HospitalDashboard = ({ handleLogout }) => {
 
             } catch (error) {
                 console.error("Mining/Upload Error:", error);
-                alert("Error during mining or upload.");
+                alert("Error during mining or upload: " + error.message);
                 setShowMiningModal(false);
             }
         }, 500);
@@ -316,6 +330,15 @@ const HospitalDashboard = ({ handleLogout }) => {
                                         placeholder="e.g. #595438"
                                     />
                                 </div>
+                                <div className="form-group">
+                                    <label>Department</label>
+                                    <select className="form-input">
+                                        <option>General Practice</option>
+                                        <option>Cardiology</option>
+                                        <option>Dermatology</option>
+                                        <option>Immunology</option>
+                                    </select>
+                                </div>
                                 <div className="form-group full-width">
                                     <label>Diagnosis</label>
                                     <input
@@ -325,11 +348,16 @@ const HospitalDashboard = ({ handleLogout }) => {
                                     />
                                 </div>
                                 <div className="form-group full-width">
-                                    <label>Notes</label>
+                                    <label>Doctor's Notes</label>
                                     <textarea
-                                        className="form-input" rows="4"
+                                        className="form-input" rows="5"
                                         value={formNotes} onChange={e => setFormNotes(e.target.value)}
+                                        placeholder="Detailed clinical notes..."
                                     ></textarea>
+                                </div>
+                                <div className="form-group full-width">
+                                    <label>Related Medical Files</label>
+                                    <input type="file" className="form-input" multiple />
                                 </div>
                                 <button type="button" className="save-btn" onClick={handleMineAndUpload}>
                                     Mine & Upload Record
