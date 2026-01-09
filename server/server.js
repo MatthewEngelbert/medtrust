@@ -12,7 +12,18 @@ app.use(cors());
 
 // --- KONEKSI KE MONGODB ---
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log("✅ MongoDB Connected"))
+    .then(async () => {
+        console.log("✅ MongoDB Connected");
+        try {
+            // Fix: Sync indexes to ensure 'sparse' option is applied to patientId/doctorId
+            // This fixes E11000 duplicate key error on null values
+            const User = mongoose.model('User');
+            await User.syncIndexes();
+            console.log("✅ Indexes Synced");
+        } catch (error) {
+            console.error("⚠️ Index Sync Error:", error);
+        }
+    })
     .catch(err => console.error("❌ MongoDB Error:", err));
 
 // --- 1. MODEL USER (SCHEMA UPDATE) ---
@@ -34,6 +45,7 @@ const userSchema = new mongoose.Schema({
     // Khusus Dokter
     specialization: { type: String },
     licenseNumber: { type: String },
+    hospital: { type: String },
 
     // ID Unik Berdasarkan Role
     patientId: { type: String, unique: true, sparse: true }, // sparse: true agar null tidak dianggap duplikat
@@ -57,7 +69,8 @@ app.post('/signup', async (req, res) => {
             address,
             role, // 'patient' or 'doctor'
             specialization,
-            licenseNumber
+            licenseNumber,
+            hospital
         } = req.body;
 
         // Cek email ganda
@@ -110,6 +123,7 @@ app.post('/signup', async (req, res) => {
             userPayload.doctorId = generatedId;
             userPayload.specialization = specialization;
             userPayload.licenseNumber = licenseNumber;
+            userPayload.hospital = hospital;
         } else {
             userPayload.patientId = generatedId;
             userPayload.age = age;
@@ -161,7 +175,8 @@ app.post('/signin', async (req, res) => {
                 domicile: user.domicile,
                 phoneNumber: user.phoneNumber,
                 address: user.address,
-                specialization: user.specialization
+                specialization: user.specialization,
+                hospital: user.hospital
             }
         });
 
@@ -174,7 +189,7 @@ app.post('/signin', async (req, res) => {
 // --- 4. ROUTE UPDATE PROFILE ---
 app.put('/update-profile', async (req, res) => {
     try {
-        const { email, name, age, domicile, phone, address, specialisation, licenseNumber } = req.body;
+        const { email, name, age, domicile, phone, address, specialisation, licenseNumber, hospital } = req.body;
 
         // Cari user berdasarkan email
         const user = await User.findOne({ email });
@@ -197,6 +212,7 @@ app.put('/update-profile', async (req, res) => {
         if (user.role === 'doctor') {
             if (specialisation) user.specialization = specialisation;
             if (licenseNumber) user.licenseNumber = licenseNumber;
+            if (hospital) user.hospital = hospital;
         }
 
         await user.save();
@@ -214,7 +230,8 @@ app.put('/update-profile', async (req, res) => {
                 phoneNumber: user.phoneNumber,
                 address: user.address,
                 specialization: user.specialization,
-                licenseNumber: user.licenseNumber
+                licenseNumber: user.licenseNumber,
+                hospital: user.hospital
             }
         });
 

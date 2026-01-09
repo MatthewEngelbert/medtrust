@@ -19,7 +19,8 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
         phone: '',
         address: '',
         specialization: '', // Doctor only
-        licenseNumber: '' // Doctor only
+        licenseNumber: '', // Doctor only
+        hospital: '' // Doctor only
     });
 
     if (!isOpen) return null;
@@ -101,7 +102,8 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
             // Conditional fields
             ...(selectedRole === 'doctor' ? {
                 specialization: formData.specialization,
-                licenseNumber: formData.licenseNumber
+                licenseNumber: formData.licenseNumber,
+                hospital: formData.hospital
             } : {
                 age: formData.age,
                 domicile: formData.domicile
@@ -134,7 +136,8 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
                     phone: '',
                     address: '',
                     specialization: '',
-                    licenseNumber: ''
+                    licenseNumber: '',
+                    hospital: ''
                 });
             } else {
                 setError(data.message || 'Registration failed');
@@ -357,6 +360,17 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
                                             value={formData.licenseNumber}
                                             onChange={handleChange}
                                             maxLength={10}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label htmlFor="hospital">Hospital / Practice Place</label>
+                                        <input
+                                            type="text"
+                                            id="hospital"
+                                            placeholder="e.g. RS Medika Jakarta"
+                                            value={formData.hospital}
+                                            onChange={handleChange}
                                             required
                                         />
                                     </div>
