@@ -27,6 +27,16 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, title, onLoginSuccess }) =
             const data = await response.json();
 
             if (response.ok) {
+                // Check for Role Mismatch
+                if (isDoctorLogin && data.user.role !== 'doctor') {
+                    setError('Akun anda tidak ada dalam daftar dokter');
+                    return;
+                }
+                if (!isDoctorLogin && data.user.role === 'doctor') {
+                    setError('Akun anda tidak ada dalam daftar patient');
+                    return;
+                }
+
                 // ... existing success logic ...
                 const userProfile = {
                     ...data.user,

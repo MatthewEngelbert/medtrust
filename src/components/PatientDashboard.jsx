@@ -3,6 +3,8 @@ import '../pages/Dashboard.css';
 
 const PatientDashboard = ({ handleLogout }) => {
     const [activeTab, setActiveTab] = useState('profile');
+    const [realMedicalRecords, setRealMedicalRecords] = useState([]);
+    const [realVisitations, setRealVisitations] = useState([]);
 
     // Load user from localStorage or use default
     const [user, setUser] = useState(() => {
@@ -41,6 +43,54 @@ const PatientDashboard = ({ handleLogout }) => {
             [name]: value
         }));
     };
+
+    const handleFetchRecords = async () => {
+        if (!user.id) return;
+
+        try {
+            const response = await fetch('http://localhost:5000/chain');
+            const data = await response.json();
+            const chain = data.chain || [];
+
+            // Filter blocks for this patient
+            // Assuming block.data.patientId matches user.id (which is the patientId)
+            const patientRecords = chain.filter(block =>
+                block.data && block.data.patientId === user.id
+            ).map(block => ({
+                id: block.index,
+                date: new Date(block.timestamp).toLocaleDateString("en-GB", {
+                    day: "numeric", month: "short", year: "numeric"
+                }),
+                hospital: block.data.hospital || "Unknown Hospital",
+                doctor: block.data.doctor?.fullName || block.data.doctor?.username || "Unknown Doctor",
+                dept: block.data.department || "General Practice",
+                diagnosis: block.data.diagnosis || "No Diagnosis",
+                notes: block.data.notes || "-",
+                status: "Completed" // Blockchain record implies completion
+            })).reverse(); // Newest first
+
+            setRealMedicalRecords(patientRecords);
+
+            // For visitations, we can use the same data but simplified
+            const patientVisitations = patientRecords.map(record => ({
+                id: record.id,
+                hospital: record.hospital,
+                dept: record.dept,
+                date: record.date,
+                status: record.status
+            }));
+
+            setRealVisitations(patientVisitations);
+
+        } catch (error) {
+            console.error("Failed to fetch records:", error);
+        }
+    };
+
+    // Initial fetch
+    React.useEffect(() => {
+        handleFetchRecords();
+    }, [user.id]);
 
     const handleSaveProfile = async (e) => {
         e.preventDefault();
@@ -88,60 +138,33 @@ const PatientDashboard = ({ handleLogout }) => {
     };
 
     const medicalRecords = [
-        {
-            id: 1,
-            date: "12 Dec 2025",
-            hospital: "Siloam Hospitals Semanggi",
-            doctor: "Dr. Budi Santoso",
-            dept: "General Practice",
-            diagnosis: "Routine Checkup",
-            notes: "Patient in good health. BP normal (120/80). Recommended to maintain daily exercise and reduced sodium intake.",
-            status: "Completed"
-        },
-        {
-            id: 2,
-            date: "20 Oct 2025",
-            hospital: "RS Pondok Indah",
-            doctor: "Dr. Sarah Wijaya",
-            dept: "Dental Care",
-            diagnosis: "Regular Cleaning",
-            notes: "Routine cleaning completed. No cavities found. Gums look healthy. Scheduled next visit in 6 months.",
-            status: "Completed"
-        },
-        {
-            id: 3,
-            date: "15 Aug 2025",
-            hospital: "RSCM Kencana",
-            doctor: "Dr. Andi Pratama",
-            dept: "Immunology",
-            diagnosis: "Vaccination",
-            notes: "COVID-19 Booster (Pfizer) administered. Patient advised to monitor for slight fever or arm soreness for 24 hours.",
-            status: "Completed"
-        }
-    ];
-
-    const visitations = [
-        {
-            id: 1,
-            hospital: "Siloam Hospitals Semanggi",
-            dept: "General Practice",
-            date: "12 Dec 2025",
-            status: "Completed"
-        },
-        {
-            id: 2,
-            hospital: "RS Pondok Indah",
-            dept: "Dental Care",
-            date: "20 Oct 2025",
-            status: "Completed"
-        },
-        {
-            id: 3,
-            hospital: "RSCM Kencana",
-            dept: "Immunology",
-            date: "15 Aug 2025",
-            status: "Completed"
-        }
+        /*
+            const medicalRecords = [
+                {
+                    id: 2,
+                    date: "20 Oct 2025",
+                    hospital: "RS Pondok Indah",
+                    doctor: "Dr. Sarah Wijaya",
+                    dept: "Dental Care",
+                    diagnosis: "Regular Cleaning",
+                    notes: "Routine cleaning completed. No cavities found. Gums look healthy. Scheduled next visit in 6 months.",
+                    status: "Completed"
+                },
+                {
+                    id: 3,
+                    date: "15 Aug 2025",
+                    hospital: "RSCM Kencana",
+                    doctor: "Dr. Andi Pratama",
+                    dept: "Immunology",
+                    diagnosis: "Vaccination",
+                    notes: "COVID-19 Booster (Pfizer) administered. Patient advised to monitor for slight fever or arm soreness for 24 hours.",
+                    status: "Completed"
+                }
+            ];
+        
+            const visitations = [
+            ];
+        */
     ];
 
     return (
@@ -229,18 +252,22 @@ const PatientDashboard = ({ handleLogout }) => {
                             <div className="profile-card visitations-info full-width-card">
                                 <h3 className="card-title">Recent Visitations</h3>
                                 <div className="visitation-list">
-                                    {visitations.map(visit => (
-                                        <div key={visit.id} className="visitation-item">
-                                            <div className="visitation-main">
-                                                <h4>{visit.hospital}</h4>
-                                                <span className="visitation-dept">{visit.dept}</span>
+                                    {realVisitations.length === 0 ? (
+                                        <p style={{ color: '#64748b', padding: '1rem' }}>No visitations found.</p>
+                                    ) : (
+                                        realVisitations.map(visit => (
+                                            <div key={visit.id} className="visitation-item">
+                                                <div className="visitation-main">
+                                                    <h4>{visit.hospital}</h4>
+                                                    <span className="visitation-dept">{visit.dept}</span>
+                                                </div>
+                                                <div className="visitation-meta">
+                                                    <span className="visitation-date">{visit.date}</span>
+                                                    <span className="status-badge">{visit.status}</span>
+                                                </div>
                                             </div>
-                                            <div className="visitation-meta">
-                                                <span className="visitation-date">{visit.date}</span>
-                                                <span className="status-badge">{visit.status}</span>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        ))
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -248,36 +275,43 @@ const PatientDashboard = ({ handleLogout }) => {
 
                     {activeTab === 'records' && (
                         <div className="records-grid">
-                            {medicalRecords.map(record => (
-                                <div key={record.id} className="record-card">
-                                    <div className="record-header">
-                                        <div className="record-hospital">
-                                            <h3>{record.hospital}</h3>
-                                            <span className="record-dept">{record.dept}</span>
-                                        </div>
-                                        <span className="record-date">{record.date}</span>
-                                    </div>
-
-                                    <div className="record-body">
-                                        <div className="record-info-row">
-                                            <span className="info-label">Doctor:</span>
-                                            <span className="info-value">{record.doctor}</span>
-                                        </div>
-                                        <div className="record-info-row">
-                                            <span className="info-label">Diagnosis:</span>
-                                            <span className="info-value">{record.diagnosis}</span>
-                                        </div>
-                                        <div className="record-notes">
-                                            <span className="notes-label">Doctor's Notes:</span>
-                                            <p className="userid-notes">{record.notes}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="record-footer">
-                                        <button className="view-details-btn">View Full Report</button>
-                                    </div>
+                            {realMedicalRecords.length === 0 ? (
+                                <div style={{ textAlign: 'center', width: '100%', padding: '3rem', color: '#64748b' }}>
+                                    <h3>No Medical Records Found.</h3>
+                                    <p>Your history will appear here once a doctor adds a record.</p>
                                 </div>
-                            ))}
+                            ) : (
+                                realMedicalRecords.map(record => (
+                                    <div key={record.id} className="record-card">
+                                        <div className="record-header">
+                                            <div className="record-hospital">
+                                                <h3>{record.hospital}</h3>
+                                                <span className="record-dept">{record.dept}</span>
+                                            </div>
+                                            <span className="record-date">{record.date}</span>
+                                        </div>
+
+                                        <div className="record-body">
+                                            <div className="record-info-row">
+                                                <span className="info-label">Doctor:</span>
+                                                <span className="info-value">{record.doctor}</span>
+                                            </div>
+                                            <div className="record-info-row">
+                                                <span className="info-label">Diagnosis:</span>
+                                                <span className="info-value">{record.diagnosis}</span>
+                                            </div>
+                                            <div className="record-notes">
+                                                <span className="notes-label">Doctor's Notes:</span>
+                                                <p className="userid-notes">{record.notes}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="record-footer">
+                                            <button className="view-details-btn">View Full Report</button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     )}
 
