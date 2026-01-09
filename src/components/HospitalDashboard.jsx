@@ -1,99 +1,203 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Block from '../lib/blockchain/Block.js';
 import '../pages/Dashboard.css';
 
 const HospitalDashboard = ({ handleLogout }) => {
     const [activeTab, setActiveTab] = useState('dashboard');
+    const [showMiningModal, setShowMiningModal] = useState(false);
+    const [miningStep, setMiningStep] = useState('idle'); // idle, mining, success
+    const [minedBlock, setMinedBlock] = useState(null);
 
-    const patients = [
-        { id: 8824192, name: "Alexander Bennett", age: 34, conditions: "Hypertension", lastVisit: "12 Dec 2025" },
-        { id: 8892103, name: "Sarah Johnson", age: 29, conditions: "Asthma", lastVisit: "10 Jan 2026" },
-        { id: 8812394, name: "Michael Chen", age: 45, conditions: "Diabetes Type 2", lastVisit: "05 Jan 2026" },
-    ];
+    // Form States
+    const [formPatientId, setFormPatientId] = useState('');
+    const [formDiagnosis, setFormDiagnosis] = useState('');
+    const [formNotes, setFormNotes] = useState('');
 
-    const visitations = [
-        {
-            id: 1,
-            hospital: "Siloam Hospitals Semanggi",
-            dept: "General Practice",
-            date: "12 Dec 2025",
-            status: "Completed"
-        },
-        {
-            id: 2,
-            hospital: "RS Pondok Indah",
-            dept: "Dental Care",
-            date: "20 Oct 2025",
-            status: "Completed"
-        },
-        {
-            id: 3,
-            hospital: "RSCM Kencana",
-            dept: "Immunology",
-            date: "15 Aug 2025",
-            status: "Completed"
-        }
-    ];
-
+    // Search States (Dashboard)
     const [searchQuery, setSearchQuery] = useState('');
     const [searchedPatient, setSearchedPatient] = useState(null);
 
-    const handleSearch = () => {
-        if (searchQuery) {
-            // Softcode: Find patient from the mock list
-            const found = patients.find(p => p.id.toString() === searchQuery.trim() || p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    // Blockchain History State
+    const [chainHistory, setChainHistory] = useState([]);
 
-            if (found) {
-                setSearchedPatient({
-                    name: found.name,
-                    id: `#${found.id}`,
-                    avatar: `https://ui-avatars.com/api/?name=${found.name.replace(' ', '+')}&background=009149&color=fff&size=150`,
-                    badge: "Verified Patient",
-                    details: `Patient, ${found.age}y`
-                });
-            } else {
-                alert("Patient not found!");
-                setSearchedPatient(null);
-            }
+    const doctor = JSON.parse(localStorage.getItem('userProfile')) || { name: 'Doctor' };
+
+    // --- ACTIONS ---
+
+    const fetchChain = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/chain');
+            const data = await response.json();
+            // Reverse to show latest first
+            const chain = data.chain || [];
+            setChainHistory([...chain].reverse());
+        } catch (err) {
+            console.error("Failed to fetch chain", err);
         }
     };
 
-    const [doctor] = useState(() => {
-        const storedUser = JSON.parse(localStorage.getItem('userProfile'));
-        return storedUser || {};
-    });
+    const handleSearch = async () => {
+        if (!searchQuery) return;
+        try {
+            const response = await fetch(`http://localhost:5000/patients/search?query=${searchQuery}`);
+            const data = await response.json();
+
+            if (data.length > 0) {
+                const found = data[0];
+                setSearchedPatient({
+                    name: found.fullName || found.username,
+                    id: found.patientId,
+                    avatar: `https://ui-avatars.com/api/?name=${(found.fullName || found.username).replace(' ', '+')}&background=009149&color=fff&size=150`,
+                    badge: "Registered Patient",
+                    details: `Patient, ${found.age ? found.age + 'y' : 'N/A'}`
+                });
+            } else {
+                setSearchedPatient(null);
+                alert("Patient not found!");
+            }
+        } catch (err) {
+            console.error("Search failed", err);
+            alert("Search Error");
+        }
+    };
+
+    const handleMineAndUpload = async () => {
+        if (!formPatientId || !formDiagnosis) {
+            alert("Please fill in all fields (Patient ID and Diagnosis)");
+            return;
+        }
+
+        setShowMiningModal(true);
+        setMiningStep('mining');
+
+        // Use timeout to allow UI to render modal before heavy calculation
+        setTimeout(async () => {
+            try {
+                // 1. Client-Side Mining
+                const newBlock = new Block(
+                    0, // Index temporary
+                    new Date().toISOString(),
+                    {
+                        patientId: formPatientId,
+                        diagnosis: formDiagnosis,
+                        notes: formNotes,
+                        doctor: { username: doctor.username, fullName: doctor.fullName }
+                    }
+                );
+
+                // Difficulty 4
+                newBlock.mineBlock(4);
+
+                setMinedBlock(newBlock);
+                setMiningStep('success');
+
+                // 2. Sync to Server
+                await fetch('http://localhost:5000/mine', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        patientId: formPatientId,
+                        diagnosis: formDiagnosis,
+                        doctor: doctor,
+                        additionalData: {
+                            notes: formNotes,
+                            clientHash: newBlock.hash,
+                            clientNonce: newBlock.nonce
+                        }
+                    })
+                });
+
+                // Clear form
+                setFormPatientId('');
+                setFormDiagnosis('');
+                setFormNotes('');
+
+            } catch (error) {
+                console.error("Mining/Upload Error:", error);
+                alert("Error during mining or upload.");
+                setShowMiningModal(false);
+            }
+        }, 500);
+    };
+
+    // Auto-fetch chain when entering history tab
+    useEffect(() => {
+        if (activeTab === 'patients') {
+            fetchChain();
+        }
+    }, [activeTab]);
+
+    const visitations = [
+        { id: 1, hospital: "Siloam Hospitals", dept: "General Practice", date: "12 Dec 2025", status: "Completed" },
+        { id: 2, hospital: "RS Pondok Indah", dept: "Dental Care", date: "20 Oct 2025", status: "Completed" },
+        { id: 3, hospital: "RSCM Kencana", dept: "Immunology", date: "15 Aug 2025", status: "Completed" }
+    ];
 
     return (
         <div className="dashboard-container">
-            <aside className="dashboard-sidebar">
-                <a href="/" className="dashboard-logo">
-                    Med<span>Trust</span>
-                </a>
+            {/* MINING MODAL */}
+            {showMiningModal && (
+                <div className="modal-overlay" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1000 }}>
+                    <div className="modal-content" style={{ background: 'white', padding: '2rem', borderRadius: '16px', maxWidth: '600px', width: '90%', textAlign: 'center' }}>
+                        {miningStep === 'mining' && (
+                            <div style={{ padding: '2rem' }}>
+                                <div className="spinner" style={{ width: '50px', height: '50px', border: '5px solid #f3f3f3', borderTop: '5px solid #009149', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }}></div>
+                                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e293b' }}>Mining Block...</h2>
+                                <p style={{ color: '#64748b' }}>Solving Proof-of-Work (SHA-256)</p>
+                                <p style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '0.5rem', marginTop: '1rem', borderRadius: '4px' }}>Target: 0000...</p>
+                            </div>
+                        )}
 
+                        {miningStep === 'success' && minedBlock && (
+                            <div style={{ textAlign: 'left' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                                    <div style={{ background: '#dcfce7', padding: '1rem', borderRadius: '50%', color: '#166534' }}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    </div>
+                                    <div>
+                                        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#166534' }}>Block Mined Successfully!</h2>
+                                        <p style={{ color: '#64748b' }}>Your medical record has been secured on the blockchain.</p>
+                                    </div>
+                                </div>
+
+                                <div style={{ background: '#1e293b', color: '#a5b4fc', padding: '1.5rem', borderRadius: '12px', fontFamily: 'monospace', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                                    <div style={{ marginBottom: '0.5rem' }}>
+                                        <span style={{ color: '#64748b' }}>Hash Function:</span> <span style={{ color: '#fca5a5' }}>SHA-256</span>
+                                    </div>
+                                    <div style={{ marginBottom: '0.5rem' }}>
+                                        <span style={{ color: '#64748b' }}>Nonce Found:</span> <span style={{ color: '#fde047' }}>{minedBlock.nonce}</span>
+                                    </div>
+                                    <div style={{ marginBottom: '0.5rem', wordBreak: 'break-all' }}>
+                                        <span style={{ color: '#64748b' }}>Block Hash:</span><br />
+                                        <span style={{ color: '#4ade80', fontWeight: 'bold' }}>{minedBlock.hash}</span>
+                                    </div>
+                                    <div style={{ borderTop: '1px solid #334155', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
+                                        <span style={{ color: '#64748b' }}>Data Payload:</span>
+                                        <pre style={{ color: '#e2e8f0', margin: '0.5rem 0 0', whiteSpace: 'pre-wrap' }}>
+                                            {JSON.stringify(minedBlock.data, null, 2)}
+                                        </pre>
+                                    </div>
+                                </div>
+
+                                <button
+                                    className="save-btn" style={{ width: '100%' }}
+                                    onClick={() => { setShowMiningModal(false); setActiveTab('dashboard'); }}
+                                >
+                                    Close & Return to Dashboard
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            <aside className="dashboard-sidebar">
+                <a href="/" className="dashboard-logo">Med<span>Trust</span></a>
                 <nav className="sidebar-nav">
-                    <button
-                        className={`sidebar-link ${activeTab === 'dashboard' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('dashboard')}
-                    >
-                        Dashboard
-                    </button>
-                    <button
-                        className={`sidebar-link ${activeTab === 'patients' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('patients')}
-                    >
-                        History
-                    </button>
-                    <button
-                        className={`sidebar-link ${activeTab === 'upload' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('upload')}
-                    >
-                        Upload Records
-                    </button>
-                    <button
-                        className={`sidebar-link ${activeTab === 'settings' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('settings')}
-                    >
-                        Settings
-                    </button>
+                    <button className={`sidebar-link ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>Dashboard</button>
+                    <button className={`sidebar-link ${activeTab === 'patients' ? 'active' : ''}`} onClick={() => setActiveTab('patients')}>History</button>
+                    <button className={`sidebar-link ${activeTab === 'upload' ? 'active' : ''}`} onClick={() => setActiveTab('upload')}>Upload Records</button>
+                    <button className={`sidebar-link ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>Settings</button>
                 </nav>
             </aside>
 
@@ -101,7 +205,7 @@ const HospitalDashboard = ({ handleLogout }) => {
                 <header className="dashboard-header">
                     <h1 className="dashboard-title">
                         {activeTab === 'dashboard' && 'Dashboard'}
-                        {activeTab === 'patients' && 'History'}
+                        {activeTab === 'patients' && 'Blockchain Ledger History'}
                         {activeTab === 'upload' && 'Upload Medical Records'}
                         {activeTab === 'settings' && 'Hospital Settings'}
                     </h1>
@@ -122,37 +226,12 @@ const HospitalDashboard = ({ handleLogout }) => {
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                         />
-                                        <button
-                                            className="save-btn"
-                                            style={{ margin: 0, width: 'auto', padding: '0 1.5rem' }}
-                                            onClick={handleSearch}
-                                        >
-                                            Search
-                                        </button>
+                                        <button className="save-btn" style={{ margin: 0, width: 'auto', padding: '0 1.5rem' }} onClick={handleSearch}>Search</button>
                                     </div>
                                 </div>
                             </div>
 
-                            {!searchedPatient && (
-                                <div style={{
-                                    marginTop: '3rem',
-                                    textAlign: 'center',
-                                    color: '#64748b',
-                                    padding: '3rem',
-                                    background: '#f8fafc',
-                                    borderRadius: '12px',
-                                    border: '2px dashed #e2e8f0'
-                                }}>
-                                    <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#334155' }}>
-                                        Welcome, {(() => {
-                                            const name = doctor.fullName || doctor.name || doctor.username || 'Doctor';
-                                            return name.match(/^(dr\.|doctor)/i) ? name : `Dr. ${name}`;
-                                        })()}
-                                    </h3>
-                                    <p>Enter a patient's ID above to view their medical records and history.</p>
-                                </div>
-                            )}
-
+                            {/* SEARCH RESULT */}
                             {searchedPatient && (
                                 <div className="profile-grid" style={{ marginTop: '2rem' }}>
                                     <div className="profile-card main-info">
@@ -169,44 +248,17 @@ const HospitalDashboard = ({ handleLogout }) => {
 
                                     <div className="profile-card details-info" style={{ width: '100%' }}>
                                         <h3 className="card-title">Attached Medical Files</h3>
-                                        <div className="visitation-list">
-                                            <div className="visitation-item" style={{ alignItems: 'center' }}>
-                                                <div className="visitation-main">
-                                                    <h4 style={{ marginBottom: '0.2rem' }}>Blood_Test_Results.pdf</h4>
-                                                    <span className="visitation-dept">Uploaded: 12 Dec 2025</span>
-                                                </div>
-                                                <div className="visitation-meta">
-                                                    <button className="view-details-btn" style={{ padding: '0.5rem 1rem' }}>View</button>
-                                                </div>
-                                            </div>
-                                            <div className="visitation-item" style={{ alignItems: 'center' }}>
-                                                <div className="visitation-main">
-                                                    <h4 style={{ marginBottom: '0.2rem' }}>X-Ray_Chest.jpg</h4>
-                                                    <span className="visitation-dept">Uploaded: 10 Nov 2025</span>
-                                                </div>
-                                                <div className="visitation-meta">
-                                                    <button className="view-details-btn" style={{ padding: '0.5rem 1rem' }}>View</button>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <p>No new files.</p>
                                     </div>
-                                    <div className="profile-card visitations-info full-width-card" style={{ gridColumn: 'span 2' }}>
-                                        <h3 className="card-title">Recent Visitations</h3>
-                                        <div className="visitation-list">
-                                            {visitations.map(visit => (
-                                                <div key={visit.id} className="visitation-item">
-                                                    <div className="visitation-main">
-                                                        <h4>{visit.hospital}</h4>
-                                                        <span className="visitation-dept">{visit.dept}</span>
-                                                    </div>
-                                                    <div className="visitation-meta">
-                                                        <span className="visitation-date">{visit.date}</span>
-                                                        <span className="status-badge">{visit.status}</span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
+                                </div>
+                            )}
+
+                            {!searchedPatient && (
+                                <div style={{ marginTop: '3rem', textAlign: 'center', color: '#64748b', padding: '3rem', background: '#f8fafc', borderRadius: '12px', border: '2px dashed #e2e8f0' }}>
+                                    <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#334155' }}>
+                                        Welcome, {doctor.fullName || doctor.username || 'Doctor'}
+                                    </h3>
+                                    <p>Enter a patient's ID above to view their records.</p>
                                 </div>
                             )}
                         </>
@@ -214,35 +266,36 @@ const HospitalDashboard = ({ handleLogout }) => {
 
                     {activeTab === 'patients' && (
                         <div className="settings-card" style={{ width: '100%' }}>
-                            <div className="form-group" style={{ marginBottom: '2rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Filter by Name/ID</label>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <input type="text" placeholder="Search patients by name or ID..." className="form-input" style={{ flex: 1 }} />
-                                    <button className="save-btn" style={{ margin: 0, width: 'auto', padding: '0 1.5rem' }}>Search</button>
+                            <div className="form-group" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                    <h3 className="card-title">Blockchain Ledger</h3>
+                                    <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Real-time verified blocks.</p>
                                 </div>
+                                <button className="save-btn" style={{ width: 'auto', padding: '0.5rem 1rem' }} onClick={fetchChain}>Refresh</button>
                             </div>
 
                             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                                 <thead>
                                     <tr style={{ borderBottom: '2px solid #f1f5f9', color: '#64748b', textTransform: 'uppercase', fontSize: '0.85rem' }}>
-                                        <th style={{ padding: '1rem' }}>Patient Name</th>
-                                        <th style={{ padding: '1rem' }}>ID</th>
-                                        <th style={{ padding: '1rem' }}>Age</th>
-                                        <th style={{ padding: '1rem' }}>Conditions</th>
-                                        <th style={{ padding: '1rem' }}>Last Visit</th>
-                                        <th style={{ padding: '1rem' }}>Action</th>
+                                        <th style={{ padding: '1rem' }}>Idx</th>
+                                        <th style={{ padding: '1rem' }}>Time</th>
+                                        <th style={{ padding: '1rem' }}>Patient</th>
+                                        <th style={{ padding: '1rem' }}>Diagnosis</th>
+                                        <th style={{ padding: '1rem' }}>Hash</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {patients.map(p => (
-                                        <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                            <td style={{ padding: '1rem', fontWeight: '600', color: '#0f172a' }}>{p.name}</td>
-                                            <td style={{ padding: '1rem', color: '#64748b' }}>#{p.id}</td>
-                                            <td style={{ padding: '1rem', color: '#64748b' }}>{p.age}</td>
-                                            <td style={{ padding: '1rem', color: '#64748b' }}>{p.conditions}</td>
-                                            <td style={{ padding: '1rem', color: '#64748b' }}>{p.lastVisit}</td>
+                                    {chainHistory.length === 0 && <tr><td colSpan="5" style={{ padding: '1rem' }}>No blocks found.</td></tr>}
+                                    {chainHistory.map(block => (
+                                        <tr key={block.hash} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                            <td style={{ padding: '1rem' }}>#{block.index}</td>
+                                            <td style={{ padding: '1rem', fontSize: '0.85rem' }}>{new Date(block.timestamp).toLocaleString()}</td>
+                                            <td style={{ padding: '1rem', color: '#0284c7' }}>{block.data.patientId || 'Genesis'}</td>
+                                            <td style={{ padding: '1rem' }}>{block.data.diagnosis || 'Init'}</td>
                                             <td style={{ padding: '1rem' }}>
-                                                <button className="view-details-btn" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}>View Profile</button>
+                                                <span style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '2px', fontSize: '0.8rem' }}>
+                                                    {block.hash.substring(0, 10)}...
+                                                </span>
                                             </td>
                                         </tr>
                                     ))}
@@ -255,33 +308,32 @@ const HospitalDashboard = ({ handleLogout }) => {
                         <div className="settings-card" style={{ width: '100%' }}>
                             <h3 className="card-title">New Patient Record</h3>
                             <form className="settings-form">
-
                                 <div className="form-group">
                                     <label>Patient ID</label>
-                                    <input type="text" className="form-input" />
-                                </div>
-                                <div className="form-group">
-                                    <label>Department</label>
-                                    <select className="form-input">
-                                        <option>General Practice</option>
-                                        <option>Cardiology</option>
-                                        <option>Dermatology</option>
-                                    </select>
+                                    <input
+                                        type="text" className="form-input"
+                                        value={formPatientId} onChange={e => setFormPatientId(e.target.value)}
+                                        placeholder="e.g. #595438"
+                                    />
                                 </div>
                                 <div className="form-group full-width">
                                     <label>Diagnosis</label>
-                                    <input type="text" className="form-input" placeholder="Primary diagnosis..." />
+                                    <input
+                                        type="text" className="form-input"
+                                        value={formDiagnosis} onChange={e => setFormDiagnosis(e.target.value)}
+                                        placeholder="Primary diagnosis..."
+                                    />
                                 </div>
                                 <div className="form-group full-width">
-                                    <label>Doctor's Notes</label>
-                                    <textarea className="form-input" rows="5" placeholder="Detailed clinical notes..."></textarea>
+                                    <label>Notes</label>
+                                    <textarea
+                                        className="form-input" rows="4"
+                                        value={formNotes} onChange={e => setFormNotes(e.target.value)}
+                                    ></textarea>
                                 </div>
-
-                                <div className="form-group full-width">
-                                    <label>Related Medical Files</label>
-                                    <input type="file" className="form-input" multiple />
-                                </div>
-                                <button type="button" className="save-btn">Upload Record</button>
+                                <button type="button" className="save-btn" onClick={handleMineAndUpload}>
+                                    Mine & Upload Record
+                                </button>
                             </form>
                         </div>
                     )}
@@ -290,18 +342,13 @@ const HospitalDashboard = ({ handleLogout }) => {
                         <div className="settings-container">
                             <div className="settings-card">
                                 <h3 className="section-header-title">Hospital Account</h3>
-                                <p className="section-header-desc">Manage hospital profile and access settings.</p>
-                                <div className="account-actions">
-                                    <button onClick={handleLogout} className="logout-btn">
-                                        Log Out
-                                    </button>
-                                </div>
+                                <button onClick={handleLogout} className="logout-btn">Log Out</button>
                             </div>
                         </div>
                     )}
                 </section>
             </main>
-        </div >
+        </div>
     );
 };
 

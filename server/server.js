@@ -224,6 +224,35 @@ app.put('/update-profile', async (req, res) => {
     }
 });
 
+// --- 4.5 ROUTE SEARCH PATIENTS ---
+app.get('/patients/search', async (req, res) => {
+    try {
+        const { query } = req.query;
+
+        let searchCriteria = { role: 'patient' };
+
+        if (query) {
+            const regex = new RegExp(query, 'i');
+            searchCriteria.$or = [
+                { username: regex },
+                { fullName: regex },
+                { patientId: regex }
+            ];
+        }
+
+        const patients = await User.find(searchCriteria)
+            .select('username fullName patientId age domicile email')
+            .sort({ _id: -1 }) // Show newest first
+            .limit(20); // Limit to 20 for now
+
+        res.json(patients);
+
+    } catch (error) {
+        console.error("Search Patient Error:", error);
+        res.status(500).json({ message: "Gagal mencari pasien" });
+    }
+});
+
 // --- 5. BLOCKCHAIN API ---
 const Blockchain = require('./blockchain/Blockchain');
 const medTrustChain = new Blockchain();

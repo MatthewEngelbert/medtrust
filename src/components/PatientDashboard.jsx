@@ -17,7 +17,18 @@ const PatientDashboard = ({ handleLogout }) => {
             email: "alex.bennett@gmail.com",
             avatar: "https://ui-avatars.com/api/?name=Alexander+Bennett&background=009149&color=fff&size=150"
         };
-        return storedUser ? { ...defaultUser, ...storedUser } : defaultUser;
+
+        if (storedUser) {
+            return {
+                ...defaultUser,
+                ...storedUser,
+                name: storedUser.fullName || storedUser.username || defaultUser.name,
+                title: storedUser.id ? `Patient ID: ${storedUser.id}` : defaultUser.title,
+                phone: storedUser.phoneNumber || storedUser.phone || defaultUser.phone
+            };
+        }
+
+        return defaultUser;
     });
 
     const [formData, setFormData] = useState(user);
