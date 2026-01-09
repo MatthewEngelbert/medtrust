@@ -62,6 +62,24 @@ const HospitalDashboard = ({ handleLogout }) => {
         }
     };
 
+    // File State
+    const [selectedFile, setSelectedFile] = useState(null);
+
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedFile(e.target.files[0]);
+        }
+    };
+
+    const convertToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    };
+
     const handleMineAndUpload = async () => {
         if (!formPatientId || !formDiagnosis || !formHospital) {
             alert("Please fill in all fields (Patient ID, Diagnosis, and Hospital)");
@@ -100,6 +118,12 @@ const HospitalDashboard = ({ handleLogout }) => {
         // Use timeout to allow UI to render modal before heavy calculation
         setTimeout(async () => {
             try {
+                // Prepare Document (Base64)
+                let documentBase64 = null;
+                if (selectedFile) {
+                    documentBase64 = await convertToBase64(selectedFile);
+                }
+
                 // 1. Fetch Latest Chain State from Server
                 const chainResponse = await fetch('http://localhost:5000/chain');
                 const chainData = await chainResponse.json();
@@ -116,11 +140,10 @@ const HospitalDashboard = ({ handleLogout }) => {
                         patientId: formPatientId,
                         diagnosis: formDiagnosis,
                         notes: formNotes,
-                        diagnosis: formDiagnosis,
-                        notes: formNotes,
                         department: "General Practice",
                         doctor: { username: doctor.username, fullName: doctor.fullName },
-                        hospital: formHospital
+                        hospital: formHospital,
+                        document: documentBase64 // Attach image data here
                     },
                     previousHash
                 );
@@ -155,6 +178,8 @@ const HospitalDashboard = ({ handleLogout }) => {
                 setFormPatientId('');
                 setFormDiagnosis('');
                 setFormNotes('');
+                setFormHospital('');
+                setSelectedFile(null);
 
             } catch (error) {
                 console.error("Mining/Upload Error:", error);
@@ -395,7 +420,12 @@ const HospitalDashboard = ({ handleLogout }) => {
                                 </div>
                                 <div className="form-group full-width">
                                     <label>Related Medical Files</label>
-                                    <input type="file" className="form-input" multiple />
+                                    <input
+                                        type="file"
+                                        className="form-input"
+                                        accept="image/*"
+                                        onChange={handleFileChange}
+                                    />
                                 </div>
                                 <button type="button" className="save-btn" onClick={handleMineAndUpload}>
                                     Mine & Upload Record

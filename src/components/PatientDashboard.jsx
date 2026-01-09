@@ -5,6 +5,7 @@ const PatientDashboard = ({ handleLogout }) => {
     const [activeTab, setActiveTab] = useState('profile');
     const [realMedicalRecords, setRealMedicalRecords] = useState([]);
     const [realVisitations, setRealVisitations] = useState([]);
+    const [selectedRecord, setSelectedRecord] = useState(null); // For Modal
 
     // Load user from localStorage or use default
     const [user, setUser] = useState(() => {
@@ -69,6 +70,10 @@ const PatientDashboard = ({ handleLogout }) => {
                 dept: block.data.department || "General Practice",
                 diagnosis: block.data.diagnosis || "No Diagnosis",
                 notes: block.data.notes || "-",
+                dept: block.data.department || "General Practice",
+                diagnosis: block.data.diagnosis || "No Diagnosis",
+                notes: block.data.notes || "-",
+                documentImage: block.data.document, // Capture the base64 image
                 status: "Completed" // Blockchain record implies completion
             })).reverse(); // Newest first
 
@@ -310,7 +315,12 @@ const PatientDashboard = ({ handleLogout }) => {
                                         </div>
 
                                         <div className="record-footer">
-                                            <button className="view-details-btn">View Full Report</button>
+                                            <button
+                                                className="view-details-btn"
+                                                onClick={() => setSelectedRecord(record)}
+                                            >
+                                                View Full Report
+                                            </button>
                                         </div>
                                     </div>
                                 ))
@@ -408,6 +418,61 @@ const PatientDashboard = ({ handleLogout }) => {
                     )}
                 </section>
             </main>
+
+            {/* REPORT MODAL */}
+            {
+                selectedRecord && (
+                    <div className="modal-overlay" onClick={() => setSelectedRecord(null)}>
+                        <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '700px' }}>
+                            <button className="modal-close" onClick={() => setSelectedRecord(null)}>&times;</button>
+
+                            <div className="modal-header">
+                                <h2 className="modal-title">Medical Report Details</h2>
+                                <p className="modal-desc">{selectedRecord.hospital} - {selectedRecord.date}</p>
+                            </div>
+
+                            <div style={{ padding: '1rem 0' }}>
+                                <div className="record-info-row">
+                                    <span className="info-label">Doctor:</span>
+                                    <span className="info-value">{selectedRecord.doctor}</span>
+                                </div>
+                                <div className="record-info-row">
+                                    <span className="info-label">Diagnosis:</span>
+                                    <span className="info-value">{selectedRecord.diagnosis}</span>
+                                </div>
+                                <div className="record-notes" style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
+                                    <span className="notes-label">Notes:</span>
+                                    <p className="userid-notes">{selectedRecord.notes}</p>
+                                </div>
+
+                                <div style={{ marginTop: '2rem' }}>
+                                    <h4 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#334155' }}>Attached Documents</h4>
+                                    {selectedRecord.documentImage ? (
+                                        <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                                            <img
+                                                src={selectedRecord.documentImage}
+                                                alt="Medical Document"
+                                                style={{ width: '100%', height: 'auto', display: 'block' }}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div style={{
+                                            padding: '2rem',
+                                            textAlign: 'center',
+                                            background: '#f1f5f9',
+                                            borderRadius: '8px',
+                                            color: '#64748b',
+                                            fontStyle: 'italic'
+                                        }}>
+                                            "{selectedRecord.doctor}, tidak mengupload document apapun"
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </div >
     );
 };
