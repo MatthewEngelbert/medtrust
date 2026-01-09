@@ -224,6 +224,47 @@ app.put('/update-profile', async (req, res) => {
     }
 });
 
+// --- 5. BLOCKCHAIN API ---
+const Blockchain = require('./blockchain/Blockchain');
+const medTrustChain = new Blockchain();
+
+// GET /chain - Ambil seluruh data blockchain
+app.get('/chain', (req, res) => {
+    res.json(medTrustChain);
+});
+
+// POST /mine - Tambah blok baru (Record Medis)
+app.post('/mine', (req, res) => {
+    const { patientId, diagnosis, doctor, additionalData } = req.body;
+
+    if (!patientId || !diagnosis) {
+        return res.status(400).json({ message: "Data tidak lengkap" });
+    }
+
+    const blockData = {
+        patientId,
+        diagnosis,
+        doctor,
+        additionalData,
+        timestamp: new Date().toISOString()
+    };
+
+    const newBlock = new require('./blockchain/Block')(
+        medTrustChain.chain.length,
+        new Date().toISOString(),
+        blockData
+    );
+
+    console.log("⛏️  Mining block baru...");
+    medTrustChain.addBlock(newBlock);
+    console.log("✅ Block berhasil ditambahkan ke chain");
+
+    res.json({
+        message: "Block berhasil ditambahkan!",
+        block: newBlock
+    });
+});
+
 // --- JALANKAN SERVER ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server berjalan di port ${PORT}`));
