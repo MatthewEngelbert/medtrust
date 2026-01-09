@@ -54,9 +54,12 @@ const PatientDashboard = ({ handleLogout }) => {
 
             // Filter blocks for this patient
             // Assuming block.data.patientId matches user.id (which is the patientId)
-            const patientRecords = chain.filter(block =>
-                block.data && block.data.patientId === user.id
-            ).map(block => ({
+            // Filter blocks for this patient - Normalized comparison
+            const patientRecords = chain.filter(block => {
+                const blockPid = block.data && block.data.patientId ? String(block.data.patientId).replace(/#/g, '').trim().toLowerCase() : '';
+                const userPid = user.id ? String(user.id).replace(/#/g, '').trim().toLowerCase() : '';
+                return blockPid === userPid;
+            }).map(block => ({
                 id: block.index,
                 date: new Date(block.timestamp).toLocaleDateString("en-GB", {
                     day: "numeric", month: "short", year: "numeric"

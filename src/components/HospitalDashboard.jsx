@@ -68,6 +68,32 @@ const HospitalDashboard = ({ handleLogout }) => {
             return;
         }
 
+        // 1. Strict Format Check
+        if (!formPatientId.startsWith('#')) {
+            alert("⚠️ Format Invalid: Patient ID harus diawali dengan tanda pagar '#'.\nContoh: #595438");
+            return;
+        }
+
+        // 2. Database Existence Check
+        try {
+            // We reuse the search endpoint to check existence
+            // Note: In a real app, a specific /check-user endpoint would be better/faster
+            const checkResponse = await fetch(`http://localhost:5000/patients/search?query=${encodeURIComponent(formPatientId)}`);
+            const checkData = await checkResponse.json();
+
+            // Search utilizes 'regex' loose matching, so we must confirm an EXACT existence
+            const patientExists = checkData.some(p => p.patientId === formPatientId);
+
+            if (!patientExists) {
+                alert(`❌ Patient Not Found: Tidak ditemukan pasien dengan ID ${formPatientId} di database.\nMohon cek kembali input Anda.`);
+                return;
+            }
+        } catch (checkErr) {
+            console.error("Validation Check Error:", checkErr);
+            alert("Gagal memverifikasi Patient ID ke server. Coba lagi.");
+            return;
+        }
+
         setShowMiningModal(true);
         setMiningStep('mining');
 
