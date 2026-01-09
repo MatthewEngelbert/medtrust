@@ -3,6 +3,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+const BlockModel = require('./models/BlockModel');
+const Block = require('./blockchain/Block');
 
 const app = express();
 
@@ -14,6 +16,29 @@ app.use(cors());
 mongoose.connect(process.env.MONGO_URI)
     .then(async () => {
         console.log("✅ MongoDB Connected");
+
+        // --- SYNC BLOCKCHAIN FROM DB ---
+        try {
+            const blocks = await BlockModel.find().sort({ index: 1 });
+            if (blocks.length > 0) {
+                // Reconstruct Block instances
+                medTrustChain.chain = blocks.map(dbBlock => {
+                    const blk = new Block(dbBlock.index, dbBlock.timestamp, dbBlock.data, dbBlock.previousHash);
+                    blk.hash = dbBlock.hash;
+                    blk.nonce = dbBlock.nonce;
+                    return blk;
+                });
+                console.log(`✅ Blockchain loaded from DB: ${blocks.length} blocks`);
+            } else {
+                // Save Genesis Block if DB is empty
+                const genesis = medTrustChain.chain[0];
+                await new BlockModel(genesis).save();
+                console.log("✅ Genesis Block saved to DB");
+            }
+        } catch (err) {
+            console.error("❌ Blockchain Sync Error:", err);
+        }
+
         try {
             // Fix: Sync indexes to ensure 'sparse' option is applied to patientId/doctorId
             // This fixes E11000 duplicate key error on null values
@@ -281,7 +306,8 @@ app.get('/chain', (req, res) => {
 
 // POST /mine - Tambah blok baru (Record Medis)
 // POST /mine - Receive and Verify Client-Mined Block
-app.post('/mine', (req, res) => {
+// POST /mine - Receive and Verify Client-Mined Block
+app.post('/mine', async (req, res) => {
     // Expecting the full block object from client
     const { index, timestamp, data, previousHash, hash, nonce } = req.body;
 
@@ -307,6 +333,14 @@ app.post('/mine', (req, res) => {
     };
 
     medTrustChain.chain.push(newBlock);
+
+    // Save to Persistence
+    try {
+        await new BlockModel(newBlock).save();
+        console.log("✅ Block persisted to DB");
+    } catch (dbErr) {
+        console.error("❌ Failed to save block to DB:", dbErr);
+    }
 
     console.log(`✅ Block #${index} accepted from client! Hash: ${hash}`);
 
