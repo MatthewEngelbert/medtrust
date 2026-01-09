@@ -2,7 +2,7 @@
     background-color: var(--color-secondary);
     color: #94a3b8;
     padding: 4rem 0 2rem;
-    margin-top: 4rem;
+    /* margin-top: 4rem; Removed to fix gap below About Us */
 }
 
 .footer-content {

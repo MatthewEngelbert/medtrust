@@ -38,7 +38,7 @@ const Features = () => {
     ];
 
     return (
-        <section className="section" id="features">
+        <section className="section features-section" id="features">
             <div className="container">
                 <div className="section-header">
                     <h2 className="section-title">You're in Control, All Secured</h2>

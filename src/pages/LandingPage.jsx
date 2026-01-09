@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
 import Features from '../components/Features';
+import AboutUs from '../components/AboutUs';
 import Footer from '../components/Footer';
 import Login from '../components/Login';
 import Register from '../components/Register';
@@ -30,6 +31,7 @@ const LandingPage = () => {
             <main>
                 <Hero onStartNowClick={openLogin} />
                 <Features />
+                <AboutUs />
             </main>
             <Footer />
             <Login
