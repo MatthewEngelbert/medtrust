@@ -3,7 +3,7 @@ import Block from '../lib/blockchain/Block.js';
 import '../pages/Dashboard.css';
 
 const HospitalDashboard = ({ handleLogout }) => {
-    const API_URL = import.meta.env.VITE_API_URL || 'https://medtrust.vercel.app';
+    const API_URL = import.meta.env.VITE_API_URL || 'https://medtrust.vercel.app/api';
     const [activeTab, setActiveTab] = useState('dashboard');
     const [showMiningModal, setShowMiningModal] = useState(false);
     const [miningStep, setMiningStep] = useState('idle'); // idle, mining, success

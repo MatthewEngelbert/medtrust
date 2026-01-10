@@ -18,7 +18,7 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, title, onLoginSuccess }) =
         const password = e.target.password.value;
         // ...
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'https://medtrust.vercel.app';
+            const API_URL = import.meta.env.VITE_API_URL || 'https://medtrust.vercel.app/api';
             const response = await fetch(`${API_URL}/signin`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

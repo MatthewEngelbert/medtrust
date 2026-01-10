@@ -49,7 +49,7 @@ const PatientDashboard = ({ handleLogout }) => {
         if (!user.id) return;
 
         try {
-            const response = await fetch('http://localhost:5000/chain');
+            const response = await fetch(`${API_URL}/chain`);
             const data = await response.json();
             const chain = data.chain || [];
 
@@ -102,7 +102,7 @@ const PatientDashboard = ({ handleLogout }) => {
         setSaveStatus('Saving...');
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'https://medtrust.vercel.app';
+            const API_URL = import.meta.env.VITE_API_URL || 'https://medtrust.vercel.app/api';
             const response = await fetch(`${API_URL}/update-profile`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
