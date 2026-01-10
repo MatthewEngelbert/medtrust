@@ -23,7 +23,8 @@ app.get('/api/test', (req, res) => {
             mongo: !!process.env.MONGO_URI,
             blockchain: !!medTrustChain
         },
-        db_state: mongoose.connection.readyState // 0: disconnected, 1: connected, 2: connecting, 3: disconnecting
+        db_state: mongoose.connection.readyState,
+        mongo_uri_preview: process.env.MONGO_URI ? process.env.MONGO_URI.substring(0, 20) + "..." : "MISSING"
     });
 });
 
@@ -39,8 +40,14 @@ async function connectToDatabase() {
         throw new Error("MONGO_URI is missing");
     }
 
+    // SANITIZE URI (Remove quotes if user added them accidentally)
+    let mongoUri = process.env.MONGO_URI.trim();
+    if (mongoUri.startsWith('"') && mongoUri.endsWith('"')) {
+        mongoUri = mongoUri.slice(1, -1);
+    }
+
     console.log("⏳ Connecting to MongoDB...");
-    cachedDb = await mongoose.connect(process.env.MONGO_URI, {
+    cachedDb = await mongoose.connect(mongoUri, {
         bufferCommands: false, // Disable buffering to fail fast if no connection
         serverSelectionTimeoutMS: 5000 // 5s timeout
     });
