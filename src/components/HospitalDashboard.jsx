@@ -3,6 +3,7 @@ import Block from '../lib/blockchain/Block.js';
 import '../pages/Dashboard.css';
 
 const HospitalDashboard = ({ handleLogout }) => {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const [activeTab, setActiveTab] = useState('dashboard');
     const [showMiningModal, setShowMiningModal] = useState(false);
     const [miningStep, setMiningStep] = useState('idle'); // idle, mining, success
@@ -27,7 +28,7 @@ const HospitalDashboard = ({ handleLogout }) => {
 
     const fetchChain = async () => {
         try {
-            const response = await fetch('http://localhost:5000/chain');
+            const response = await fetch(`${API_URL}/chain`);
             const data = await response.json();
             // Reverse to show latest first
             const chain = data.chain || [];
@@ -40,7 +41,7 @@ const HospitalDashboard = ({ handleLogout }) => {
     const handleSearch = async () => {
         if (!searchQuery) return;
         try {
-            const response = await fetch(`http://localhost:5000/patients/search?query=${searchQuery}`);
+            const response = await fetch(`${API_URL}/patients/search?query=${searchQuery}`);
             const data = await response.json();
 
             if (data.length > 0) {
@@ -96,7 +97,7 @@ const HospitalDashboard = ({ handleLogout }) => {
         try {
             // We reuse the search endpoint to check existence
             // Note: In a real app, a specific /check-user endpoint would be better/faster
-            const checkResponse = await fetch(`http://localhost:5000/patients/search?query=${encodeURIComponent(formPatientId)}`);
+            const checkResponse = await fetch(`${API_URL}/patients/search?query=${encodeURIComponent(formPatientId)}`);
             const checkData = await checkResponse.json();
 
             // Search utilizes 'regex' loose matching, so we must confirm an EXACT existence
@@ -125,7 +126,7 @@ const HospitalDashboard = ({ handleLogout }) => {
                 }
 
                 // 1. Fetch Latest Chain State from Server
-                const chainResponse = await fetch('http://localhost:5000/chain');
+                const chainResponse = await fetch(`${API_URL}/chain`);
                 const chainData = await chainResponse.json();
                 const latestBlock = chainData.chain[chainData.chain.length - 1];
 
@@ -156,7 +157,7 @@ const HospitalDashboard = ({ handleLogout }) => {
                 setMiningStep('success');
 
                 // 4. Sync to Server (Send COMPLETE block)
-                const uploadResponse = await fetch('http://localhost:5000/mine', {
+                const uploadResponse = await fetch(`${API_URL}/mine`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

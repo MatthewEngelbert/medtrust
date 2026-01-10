@@ -70,9 +70,6 @@ const PatientDashboard = ({ handleLogout }) => {
                 dept: block.data.department || "General Practice",
                 diagnosis: block.data.diagnosis || "No Diagnosis",
                 notes: block.data.notes || "-",
-                dept: block.data.department || "General Practice",
-                diagnosis: block.data.diagnosis || "No Diagnosis",
-                notes: block.data.notes || "-",
                 documentImage: block.data.document, // Capture the base64 image
                 status: "Completed" // Blockchain record implies completion
             })).reverse(); // Newest first
@@ -105,7 +102,8 @@ const PatientDashboard = ({ handleLogout }) => {
         setSaveStatus('Saving...');
 
         try {
-            const response = await fetch('http://localhost:5000/update-profile', {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const response = await fetch(`${API_URL}/update-profile`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

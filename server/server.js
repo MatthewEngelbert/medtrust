@@ -79,8 +79,11 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+// --- JALANKAN SERVER ---
+const router = express.Router();
+
 // --- 2. ROUTE SIGN UP (DAFTAR) ---
-app.post('/signup', async (req, res) => {
+router.post('/signup', async (req, res) => {
     try {
         // Ambil semua data dari frontend
         const {
@@ -171,7 +174,7 @@ app.post('/signup', async (req, res) => {
 });
 
 // --- 3. ROUTE SIGN IN (LOGIN) ---
-app.post('/signin', async (req, res) => {
+router.post('/signin', async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -212,7 +215,7 @@ app.post('/signin', async (req, res) => {
 });
 
 // --- 4. ROUTE UPDATE PROFILE ---
-app.put('/update-profile', async (req, res) => {
+router.put('/update-profile', async (req, res) => {
     try {
         const { email, name, age, domicile, phone, address, specialisation, licenseNumber, hospital } = req.body;
 
@@ -267,7 +270,7 @@ app.put('/update-profile', async (req, res) => {
 });
 
 // --- 4.5 ROUTE SEARCH PATIENTS ---
-app.get('/patients/search', async (req, res) => {
+router.get('/patients/search', async (req, res) => {
     try {
         const { query } = req.query;
 
@@ -300,14 +303,12 @@ const Blockchain = require('./blockchain/Blockchain');
 const medTrustChain = new Blockchain();
 
 // GET /chain - Ambil seluruh data blockchain
-app.get('/chain', (req, res) => {
+router.get('/chain', (req, res) => {
     res.json(medTrustChain);
 });
 
 // POST /mine - Tambah blok baru (Record Medis)
-// POST /mine - Receive and Verify Client-Mined Block
-// POST /mine - Receive and Verify Client-Mined Block
-app.post('/mine', async (req, res) => {
+router.post('/mine', async (req, res) => {
     // Expecting the full block object from client
     const { index, timestamp, data, previousHash, hash, nonce } = req.body;
 
@@ -350,6 +351,14 @@ app.post('/mine', async (req, res) => {
     });
 });
 
-// --- JALANKAN SERVER ---
+// Mount Routes
+app.use('/api', router); // For Vercel (/api/...)
+app.use('/', router);    // For Localhost (/)
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server berjalan di port ${PORT}`));
+
+if (require.main === module) {
+    app.listen(PORT, () => console.log(`🚀 Server berjalan di port ${PORT}`));
+}
+
+module.exports = app;
