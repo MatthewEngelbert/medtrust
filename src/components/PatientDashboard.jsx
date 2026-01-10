@@ -2,6 +2,8 @@ import React, { useState } from 'react'; // Force Vercel Update
 import '../pages/Dashboard.css';
 
 const PatientDashboard = ({ handleLogout }) => {
+    const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/api');
+
     const [activeTab, setActiveTab] = useState('profile');
     const [realMedicalRecords, setRealMedicalRecords] = useState([]);
     const [realVisitations, setRealVisitations] = useState([]);
