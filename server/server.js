@@ -14,44 +14,58 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// --- HEALTH CHECK ROUTE (NO DB) ---
+app.get('/api/test', (req, res) => {
+    res.json({ status: "OK", message: "Server is running!", env_check: { mongo: !!process.env.MONGO_URI } });
+});
+
 // --- KONEKSI KE MONGODB ---
-mongoose.connect(process.env.MONGO_URI)
-    .then(async () => {
-        console.log("✅ MongoDB Connected");
+if (!process.env.MONGO_URI) {
+    console.error("❌ HAT-HAT: MONGO_URI Belum Disetting!");
+}
 
-        // --- SYNC BLOCKCHAIN FROM DB ---
-        try {
-            const blocks = await BlockModel.find().sort({ index: 1 });
-            if (blocks.length > 0) {
-                // Reconstruct Block instances
-                medTrustChain.chain = blocks.map(dbBlock => {
-                    const blk = new Block(dbBlock.index, dbBlock.timestamp, dbBlock.data, dbBlock.previousHash);
-                    blk.hash = dbBlock.hash;
-                    blk.nonce = dbBlock.nonce;
-                    return blk;
-                });
-                console.log(`✅ Blockchain loaded from DB: ${blocks.length} blocks`);
-            } else {
-                // Save Genesis Block if DB is empty
-                const genesis = medTrustChain.chain[0];
-                await new BlockModel(genesis).save();
-                console.log("✅ Genesis Block saved to DB");
+if (process.env.MONGO_URI) {
+    mongoose.connect(process.env.MONGO_URI)
+        .then(async () => {
+            console.log("✅ MongoDB Connected");
+
+            // --- SYNC BLOCKCHAIN FROM DB ---
+            try {
+                const blocks = await BlockModel.find().sort({ index: 1 });
+                if (blocks.length > 0) {
+                    // Reconstruct Block instances
+                    medTrustChain.chain = blocks.map(dbBlock => {
+                        const blk = new Block(dbBlock.index, dbBlock.timestamp, dbBlock.data, dbBlock.previousHash);
+                        blk.hash = dbBlock.hash;
+                        blk.nonce = dbBlock.nonce;
+                        return blk;
+                    });
+                    console.log(`✅ Blockchain loaded from DB: ${blocks.length} blocks`);
+                } else {
+                    // Save Genesis Block if DB is empty
+                    const genesis = medTrustChain.chain[0];
+                    await new BlockModel(genesis).save();
+                    console.log("✅ Genesis Block saved to DB");
+                }
+            } catch (err) {
+                console.error("❌ Blockchain Sync Error:", err);
             }
-        } catch (err) {
-            console.error("❌ Blockchain Sync Error:", err);
-        }
 
-        try {
-            // Fix: Sync indexes to ensure 'sparse' option is applied to patientId/doctorId
-            // This fixes E11000 duplicate key error on null values
-            const User = mongoose.model('User');
-            await User.syncIndexes();
-            console.log("✅ Indexes Synced");
-        } catch (error) {
-            console.error("⚠️ Index Sync Error:", error);
+            try {
+                // Fix: Sync indexes to ensure 'sparse' option is applied to patientId/doctorId
+                // This fixes E11000 duplicate key error on null values
+                const User = mongoose.model('User');
+                await User.syncIndexes();
+                console.log("✅ Indexes Synced");
+            } catch (error) {
+                console.error("⚠️ Index Sync Error:", error);
+            }
         }
     })
-    .catch(err => console.error("❌ MongoDB Error:", err));
+    .catch (err => console.error("❌ MongoDB Error:", err));
+} else {
+    console.warn("⚠️ Database connection skipped because MONGO_URI is missing.");
+}
 
 // --- 1. MODEL USER (SCHEMA UPDATE) ---
 // Struktur data disesuaikan dengan gambar profil MedTrust
