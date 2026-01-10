@@ -68,7 +68,14 @@ const HospitalDashboard = ({ handleLogout }) => {
 
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
-            setSelectedFile(e.target.files[0]);
+            const file = e.target.files[0];
+            // LIMIT FILE SIZE TO 1MB (Vercel Serverless Limit Safety)
+            if (file.size > 1024 * 1024) {
+                alert("⚠️ File terlalu besar! Maksimal 1MB agar upload lancar.");
+                e.target.value = ""; // Reset input
+                return;
+            }
+            setSelectedFile(file);
         }
     };
 
@@ -234,6 +241,16 @@ const HospitalDashboard = ({ handleLogout }) => {
         }
     }, [activeTab]);
 
+    // Helper to safely display data without flooding UI
+    const getDisplayData = () => {
+        if (!minedBlock || !minedBlock.data) return {};
+        const safeData = { ...minedBlock.data };
+        if (safeData.document && safeData.document.length > 50) {
+            safeData.document = safeData.document.substring(0, 50) + "... (Truncated for View)";
+        }
+        return safeData;
+    };
+
     const visitations = [
         { id: 1, hospital: "Siloam Hospitals", dept: "General Practice", date: "12 Dec 2025", status: "Completed" },
         { id: 2, hospital: "RS Pondok Indah", dept: "Dental Care", date: "20 Oct 2025", status: "Completed" },
@@ -267,7 +284,7 @@ const HospitalDashboard = ({ handleLogout }) => {
                                     </div>
                                 </div>
 
-                                <div style={{ background: '#1e293b', color: '#a5b4fc', padding: '1.5rem', borderRadius: '12px', fontFamily: 'monospace', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                                <div style={{ background: '#1e293b', color: '#a5b4fc', padding: '1.5rem', borderRadius: '12px', fontFamily: 'monospace', fontSize: '0.9rem', marginBottom: '1.5rem', overflow: 'hidden' }}>
                                     <div style={{ marginBottom: '0.5rem' }}>
                                         <span style={{ color: '#64748b' }}>Hash Function:</span> <span style={{ color: '#fca5a5' }}>SHA-256</span>
                                     </div>
@@ -280,8 +297,8 @@ const HospitalDashboard = ({ handleLogout }) => {
                                     </div>
                                     <div style={{ borderTop: '1px solid #334155', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
                                         <span style={{ color: '#64748b' }}>Data Payload:</span>
-                                        <pre style={{ color: '#e2e8f0', margin: '0.5rem 0 0', whiteSpace: 'pre-wrap' }}>
-                                            {JSON.stringify(minedBlock.data, null, 2)}
+                                        <pre style={{ color: '#e2e8f0', margin: '0.5rem 0 0', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: '200px', overflowY: 'auto' }}>
+                                            {JSON.stringify(getDisplayData(), null, 2)}
                                         </pre>
                                     </div>
                                 </div>
