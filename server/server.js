@@ -16,7 +16,14 @@ app.use(cors());
 
 // --- HEALTH CHECK ROUTE (NO DB) ---
 app.get('/api/test', (req, res) => {
-    res.json({ status: "OK", message: "Server is running!", env_check: { mongo: !!process.env.MONGO_URI } });
+    res.json({
+        status: "OK",
+        message: "Server is running!",
+        env_check: {
+            mongo: !!process.env.MONGO_URI,
+            blockchain: !!medTrustChain
+        }
+    });
 });
 
 // --- KONEKSI KE MONGODB ---
@@ -32,20 +39,22 @@ if (process.env.MONGO_URI) {
             // --- SYNC BLOCKCHAIN FROM DB ---
             try {
                 const blocks = await BlockModel.find().sort({ index: 1 });
-                if (blocks.length > 0) {
-                    // Reconstruct Block instances
-                    medTrustChain.chain = blocks.map(dbBlock => {
-                        const blk = new Block(dbBlock.index, dbBlock.timestamp, dbBlock.data, dbBlock.previousHash);
-                        blk.hash = dbBlock.hash;
-                        blk.nonce = dbBlock.nonce;
-                        return blk;
-                    });
-                    console.log(`✅ Blockchain loaded from DB: ${blocks.length} blocks`);
-                } else {
-                    // Save Genesis Block if DB is empty
-                    const genesis = medTrustChain.chain[0];
-                    await new BlockModel(genesis).save();
-                    console.log("✅ Genesis Block saved to DB");
+                if (medTrustChain) {
+                    if (blocks.length > 0) {
+                        // Reconstruct Block instances
+                        medTrustChain.chain = blocks.map(dbBlock => {
+                            const blk = new Block(dbBlock.index, dbBlock.timestamp, dbBlock.data, dbBlock.previousHash);
+                            blk.hash = dbBlock.hash;
+                            blk.nonce = dbBlock.nonce;
+                            return blk;
+                        });
+                        console.log(`✅ Blockchain loaded from DB: ${blocks.length} blocks`);
+                    } else {
+                        // Save Genesis Block if DB is empty
+                        const genesis = medTrustChain.chain[0];
+                        await new BlockModel(genesis).save();
+                        console.log("✅ Genesis Block saved to DB");
+                    }
                 }
             } catch (err) {
                 console.error("❌ Blockchain Sync Error:", err);
@@ -316,15 +325,22 @@ router.get('/patients/search', async (req, res) => {
 
 // --- 5. BLOCKCHAIN API ---
 import Blockchain from './blockchain/Blockchain.js';
-const medTrustChain = new Blockchain();
+let medTrustChain = null;
+try {
+    medTrustChain = new Blockchain();
+    console.log("✅ Blockchain Initialized");
+} catch (e) {
+    console.error("❌ Failed to initialize Blockchain:", e);
+}
 
-// GET /chain - Ambil seluruh data blockchain
 router.get('/chain', (req, res) => {
+    if (!medTrustChain) return res.status(500).json({ message: "Blockchain failed to initialize" });
     res.json(medTrustChain);
 });
 
 // POST /mine - Tambah blok baru (Record Medis)
 router.post('/mine', async (req, res) => {
+    if (!medTrustChain) return res.status(500).json({ message: "Blockchain failed to initialize" });
     // Expecting the full block object from client
     const { index, timestamp, data, previousHash, hash, nonce } = req.body;
 
