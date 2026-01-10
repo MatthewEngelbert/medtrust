@@ -6,7 +6,7 @@ import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import BlockModel from './models/BlockModel.js';
 import Block from './blockchain/Block.js';
-import { fileURLToPath } from 'url';
+// import { fileURLToPath } from 'url'; // Removed to avoid Vercel SyntaxError
 
 const app = express();
 
@@ -389,7 +389,7 @@ app.use('/', router);    // For Localhost (/)
 
 const PORT = process.env.PORT || 5000;
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (!process.env.VERCEL) {
     app.listen(PORT, () => console.log(`🚀 Server berjalan di port ${PORT}`));
 }
 
