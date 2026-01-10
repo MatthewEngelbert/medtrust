@@ -151,7 +151,7 @@ const HospitalDashboard = ({ handleLogout }) => {
 
                 // 3. Client-Side Mining (PoW)
                 console.log("Start mining...", newBlock);
-                newBlock.mineBlock(4);
+                newBlock.mineBlock(2); // Reduced difficulty to 2 for demo performance (avoids UI freeze)
 
                 setMinedBlock(newBlock);
                 setMiningStep('success');
