@@ -210,7 +210,7 @@ router.post('/signin', async (req, res) => {
 
     } catch (error) {
         console.error("Signin Error:", error);
-        res.status(500).json({ message: "Terjadi kesalahan server" });
+        res.status(500).json({ message: "Terjadi kesalahan server", error: error.message, stack: error.stack });
     }
 });
 
