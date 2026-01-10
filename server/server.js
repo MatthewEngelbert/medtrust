@@ -1,10 +1,12 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const BlockModel = require('./models/BlockModel');
-const Block = require('./blockchain/Block');
+import dotenv from 'dotenv';
+dotenv.config();
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import bcrypt from 'bcryptjs';
+import BlockModel from './models/BlockModel.js';
+import Block from './blockchain/Block.js';
+import { fileURLToPath } from 'url';
 
 const app = express();
 
@@ -299,7 +301,7 @@ router.get('/patients/search', async (req, res) => {
 });
 
 // --- 5. BLOCKCHAIN API ---
-const Blockchain = require('./blockchain/Blockchain');
+import Blockchain from './blockchain/Blockchain.js';
 const medTrustChain = new Blockchain();
 
 // GET /chain - Ambil seluruh data blockchain
@@ -357,8 +359,8 @@ app.use('/', router);    // For Localhost (/)
 
 const PORT = process.env.PORT || 5000;
 
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
     app.listen(PORT, () => console.log(`🚀 Server berjalan di port ${PORT}`));
 }
 
-module.exports = app;
+export default app;

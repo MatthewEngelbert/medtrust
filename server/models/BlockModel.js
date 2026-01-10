@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const blockSchema = new mongoose.Schema({
     index: { type: Number, required: true },
@@ -9,4 +9,4 @@ const blockSchema = new mongoose.Schema({
     nonce: { type: Number, required: true }
 });
 
-module.exports = mongoose.model('Block', blockSchema);
+export default mongoose.model('Block', blockSchema);

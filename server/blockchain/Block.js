@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 class Block {
     constructor(index, timestamp, data, previousHash = '') {
@@ -32,4 +32,4 @@ class Block {
     }
 }
 
-module.exports = Block;
+export default Block;
