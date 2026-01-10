@@ -111,7 +111,7 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
         };
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const API_URL = import.meta.env.VITE_API_URL || 'https://medtrust.vercel.app';
             const response = await fetch(`${API_URL}/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
