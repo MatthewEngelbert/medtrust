@@ -9,4 +9,5 @@ const blockSchema = new mongoose.Schema({
     nonce: { type: Number, required: true }
 });
 
-export default mongoose.model('Block', blockSchema);
+const Block = mongoose.models.Block || mongoose.model('Block', blockSchema);
+export default Block;

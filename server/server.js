@@ -93,7 +93,7 @@ const userSchema = new mongoose.Schema({
     doctorId: { type: String, unique: true, sparse: true }
 });
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 // --- JALANKAN SERVER ---
 const router = express.Router();
