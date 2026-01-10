@@ -60,9 +60,9 @@ if (process.env.MONGO_URI) {
             } catch (error) {
                 console.error("⚠️ Index Sync Error:", error);
             }
-        }
-    })
-    .catch (err => console.error("❌ MongoDB Error:", err));
+
+        })
+        .catch(err => console.error("❌ MongoDB Error:", err));
 } else {
     console.warn("⚠️ Database connection skipped because MONGO_URI is missing.");
 }
