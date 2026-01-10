@@ -116,7 +116,7 @@ const HospitalDashboard = ({ handleLogout }) => {
         setShowMiningModal(true);
         setMiningStep('mining');
 
-        // Use timeout to allow UI to render modal before heavy calculation
+        // Use timeout to allow UI to render modal first
         setTimeout(async () => {
             try {
                 // Prepare Document (Base64)
@@ -125,7 +125,7 @@ const HospitalDashboard = ({ handleLogout }) => {
                     documentBase64 = await convertToBase64(selectedFile);
                 }
 
-                // 1. Fetch Latest Chain State from Server
+                // 1. Fetch Latest Chain State
                 const chainResponse = await fetch(`${API_URL}/chain`);
                 const chainData = await chainResponse.json();
                 const latestBlock = chainData.chain[chainData.chain.length - 1];
@@ -133,58 +133,95 @@ const HospitalDashboard = ({ handleLogout }) => {
                 const newIndex = chainData.chain.length;
                 const previousHash = latestBlock.hash;
 
-                // 2. Create Block with correct Previous Hash
+                // 2. Prepare Block Data
+                const blockData = {
+                    patientId: formPatientId,
+                    diagnosis: formDiagnosis,
+                    notes: formNotes,
+                    department: "General Practice",
+                    doctor: { username: doctor.username, fullName: doctor.fullName },
+                    hospital: formHospital,
+                    document: documentBase64
+                };
+
                 const newBlock = new Block(
                     newIndex,
                     new Date().toISOString(),
-                    {
-                        patientId: formPatientId,
-                        diagnosis: formDiagnosis,
-                        notes: formNotes,
-                        department: "General Practice",
-                        doctor: { username: doctor.username, fullName: doctor.fullName },
-                        hospital: formHospital,
-                        document: documentBase64 // Attach image data here
-                    },
+                    blockData,
                     previousHash
                 );
 
-                // 3. Client-Side Mining (PoW)
-                console.log("Start mining...", newBlock);
-                newBlock.mineBlock(2); // Reduced difficulty to 2 for demo performance (avoids UI freeze)
+                // 3. Client-Side Mining (WEB WORKER) - NON BLOCKING
+                console.log("Start mining (Bg Worker)...", newBlock);
 
-                setMinedBlock(newBlock);
-                setMiningStep('success');
+                // Initialize Worker
+                const worker = new Worker(new URL('../workers/mining.worker.js', import.meta.url), { type: 'module' });
 
-                // 4. Sync to Server (Send COMPLETE block)
-                const uploadResponse = await fetch(`${API_URL}/mine`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        index: newBlock.index,
-                        timestamp: newBlock.timestamp,
-                        data: newBlock.data,
-                        previousHash: newBlock.previousHash,
-                        hash: newBlock.hash,
-                        nonce: newBlock.nonce
-                    })
+                worker.postMessage({
+                    index: newBlock.index,
+                    previousHash: newBlock.previousHash,
+                    timestamp: newBlock.timestamp,
+                    dataString: JSON.stringify(newBlock.data), // Pass STRING to ensure consistency
+                    difficulty: 4 // Restore High Difficulty
                 });
 
-                if (!uploadResponse.ok) {
-                    const errData = await uploadResponse.json();
-                    throw new Error(errData.message || "Server rejected block");
-                }
+                worker.onmessage = async (e) => {
+                    const { nonce, hash, duration } = e.data;
+                    console.log(`Block mined in ${duration}ms. Hash: ${hash}`);
 
-                // Clear form
-                setFormPatientId('');
-                setFormDiagnosis('');
-                setFormNotes('');
-                setFormHospital('');
-                setSelectedFile(null);
+                    // Apply result to block
+                    newBlock.nonce = nonce;
+                    newBlock.hash = hash;
+
+                    setMinedBlock(newBlock);
+                    setMiningStep('success');
+
+                    // 4. Sync to Server
+                    try {
+                        const uploadResponse = await fetch(`${API_URL}/mine`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                index: newBlock.index,
+                                timestamp: newBlock.timestamp,
+                                data: newBlock.data,
+                                previousHash: newBlock.previousHash,
+                                hash: newBlock.hash,
+                                nonce: newBlock.nonce
+                            })
+                        });
+
+                        if (!uploadResponse.ok) {
+                            const errData = await uploadResponse.json();
+                            throw new Error(errData.message || "Server rejected block");
+                        }
+
+                        // Success Cleanup
+                        setFormPatientId('');
+                        setFormDiagnosis('');
+                        setFormNotes('');
+                        setFormHospital('');
+                        setSelectedFile(null);
+                        worker.terminate(); // Kill worker
+
+                    } catch (uploadErr) {
+                        console.error("Upload Error:", uploadErr);
+                        alert("Upload Failed: " + uploadErr.message);
+                        setShowMiningModal(false);
+                        worker.terminate();
+                    }
+                };
+
+                worker.onerror = (err) => {
+                    console.error("Worker Error:", err);
+                    alert("Mining Worker Failed!");
+                    setShowMiningModal(false);
+                    worker.terminate();
+                };
 
             } catch (error) {
-                console.error("Mining/Upload Error:", error);
-                alert("Error during mining or upload: " + error.message);
+                console.error(" mining preparation error:", error);
+                alert("Error during mining init: " + error.message);
                 setShowMiningModal(false);
             }
         }, 500);
