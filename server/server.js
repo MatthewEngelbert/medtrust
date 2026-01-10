@@ -40,8 +40,20 @@ async function connectToDatabase() {
         throw new Error("MONGO_URI is missing");
     }
 
-    // SANITIZE URI (Remove quotes if user added them accidentally)
+    // SANITIZE URI (Remove quotes or prefixes if user added them accidentally)
     let mongoUri = process.env.MONGO_URI.trim();
+
+    // Remove leading '=' (Common Vercel copy-pase error)
+    if (mongoUri.startsWith('=')) {
+        mongoUri = mongoUri.substring(1);
+    }
+
+    // Remove "MONGO_URI=" prefix (If user pasted the whole line)
+    if (mongoUri.startsWith('MONGO_URI=')) {
+        mongoUri = mongoUri.substring('MONGO_URI='.length);
+    }
+
+    // Remove quotes
     if (mongoUri.startsWith('"') && mongoUri.endsWith('"')) {
         mongoUri = mongoUri.slice(1, -1);
     }
