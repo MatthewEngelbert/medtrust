@@ -306,6 +306,10 @@ const HospitalDashboard = ({ handleLogout }) => {
                                         <span style={{ color: '#64748b' }}>Nonce Found:</span> <span style={{ color: '#fde047' }}>{minedBlock.nonce}</span>
                                     </div>
                                     <div style={{ marginBottom: '0.5rem', wordBreak: 'break-all' }}>
+                                        <span style={{ color: '#64748b' }}>Previous Hash:</span><br />
+                                        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{minedBlock.previousHash}</span>
+                                    </div>
+                                    <div style={{ marginBottom: '0.5rem', wordBreak: 'break-all' }}>
                                         <span style={{ color: '#64748b' }}>Block Hash:</span><br />
                                         <span style={{ color: '#4ade80', fontWeight: 'bold' }}>{minedBlock.hash}</span>
                                     </div>
