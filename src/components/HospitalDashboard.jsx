@@ -268,6 +268,9 @@ const HospitalDashboard = ({ handleLogout }) => {
         { id: 3, hospital: "RSCM Kencana", dept: "Immunology", date: "15 Aug 2025", status: "Completed" }
     ];
 
+    // Selected Record for Modal
+    const [selectedRecord, setSelectedRecord] = useState(null);
+
     return (
         <div className="dashboard-container">
             {/* MINING MODAL */}
@@ -355,7 +358,7 @@ const HospitalDashboard = ({ handleLogout }) => {
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                                         <input
                                             type="text"
-                                            placeholder="Enter Patient ID"
+                                            placeholder="Enter Patient ID (e.g. #595438)"
                                             className="form-input"
                                             style={{ flex: 1 }}
                                             value={searchQuery}
@@ -396,7 +399,12 @@ const HospitalDashboard = ({ handleLogout }) => {
                                                     const searchPid = searchedPatient.id ? String(searchedPatient.id).replace(/#/g, '').trim().toLowerCase() : '';
                                                     return blockPid === searchPid;
                                                 }).map(block => (
-                                                    <div key={block.hash} className="visitation-item" style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #f1f5f9' }}>
+                                                    <div
+                                                        key={block.hash}
+                                                        className="visitation-item"
+                                                        style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
+                                                        onClick={() => setSelectedRecord(block)}
+                                                    >
                                                         <div className="visitation-main">
                                                             <h4 style={{ margin: 0, color: '#0f172a' }}>{block.data.hospital || "Unknown Hospital"}</h4>
                                                             <span className="visitation-dept" style={{ fontSize: '0.85rem', color: '#64748b' }}>{block.data.department || "General Practice"}</span>
@@ -535,6 +543,59 @@ const HospitalDashboard = ({ handleLogout }) => {
                     )}
                 </section>
             </main>
+
+            {/* DETAIL MODAL */}
+            {selectedRecord && (
+                <div className="modal-overlay" onClick={() => setSelectedRecord(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '700px' }}>
+                        <button className="modal-close" onClick={() => setSelectedRecord(null)}>&times;</button>
+
+                        <div className="modal-header">
+                            <h2 className="modal-title">Medical Report Details</h2>
+                            <p className="modal-desc">{selectedRecord.data.hospital || "Unknown Hospital"} - {new Date(selectedRecord.timestamp).toLocaleDateString()}</p>
+                        </div>
+
+                        <div style={{ padding: '1rem 0' }}>
+                            <div className="record-info-row">
+                                <span className="info-label">Doctor:</span>
+                                <span className="info-value">{selectedRecord.data.doctor?.fullName || selectedRecord.data.doctor?.username || "Unknown Doctor"}</span>
+                            </div>
+                            <div className="record-info-row">
+                                <span className="info-label">Diagnosis:</span>
+                                <span className="info-value">{selectedRecord.data.diagnosis}</span>
+                            </div>
+                            <div className="record-notes" style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
+                                <span className="notes-label">Notes:</span>
+                                <p className="userid-notes">{selectedRecord.data.notes || "-"}</p>
+                            </div>
+
+                            <div style={{ marginTop: '2rem' }}>
+                                <h4 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#334155' }}>Attached Documents</h4>
+                                {selectedRecord.data.document ? (
+                                    <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                                        <img
+                                            src={selectedRecord.data.document}
+                                            alt="Medical Document"
+                                            style={{ width: '100%', height: 'auto', display: 'block' }}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div style={{
+                                        padding: '2rem',
+                                        textAlign: 'center',
+                                        background: '#f1f5f9',
+                                        borderRadius: '8px',
+                                        color: '#64748b',
+                                        fontStyle: 'italic'
+                                    }}>
+                                        "Tidak ada dokumen yang dilampirkan"
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
