@@ -41,11 +41,20 @@ const HospitalDashboard = ({ handleLogout }) => {
     const handleSearch = async () => {
         if (!searchQuery) return;
         try {
-            const response = await fetch(`${API_URL}/patients/search?query=${searchQuery}`);
+            const response = await fetch(`${API_URL}/patients/search?query=${encodeURIComponent(searchQuery)}`);
             const data = await response.json();
 
+            let found = null;
             if (data.length > 0) {
-                const found = data[0];
+                // Strict check for ID
+                if (searchQuery.startsWith('#')) {
+                    found = data.find(p => p.patientId === searchQuery);
+                } else {
+                    found = data[0];
+                }
+            }
+
+            if (found) {
                 setSearchedPatient({
                     name: found.fullName || found.username,
                     id: found.patientId,
