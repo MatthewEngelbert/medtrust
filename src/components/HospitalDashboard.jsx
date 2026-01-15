@@ -53,6 +53,8 @@ const HospitalDashboard = ({ handleLogout }) => {
                     badge: "Registered Patient",
                     details: `Patient, ${found.age ? found.age + 'y' : 'N/A'}`
                 });
+                // Fetch chain history to display records
+                fetchChain();
             } else {
                 setSearchedPatient(null);
                 alert("Patient not found!");
@@ -371,8 +373,33 @@ const HospitalDashboard = ({ handleLogout }) => {
                                     </div>
 
                                     <div className="profile-card details-info" style={{ width: '100%' }}>
-                                        <h3 className="card-title">Attached Medical Files</h3>
-                                        <p>No new files.</p>
+                                        <h3 className="card-title">History Record</h3>
+                                        {chainHistory.filter(block => {
+                                            const blockPid = block.data && block.data.patientId ? String(block.data.patientId).replace(/#/g, '').trim().toLowerCase() : '';
+                                            const searchPid = searchedPatient.id ? String(searchedPatient.id).replace(/#/g, '').trim().toLowerCase() : '';
+                                            return blockPid === searchPid;
+                                        }).length === 0 ? (
+                                            <p>No history records found for this patient.</p>
+                                        ) : (
+                                            <div className="visitation-list">
+                                                {chainHistory.filter(block => {
+                                                    const blockPid = block.data && block.data.patientId ? String(block.data.patientId).replace(/#/g, '').trim().toLowerCase() : '';
+                                                    const searchPid = searchedPatient.id ? String(searchedPatient.id).replace(/#/g, '').trim().toLowerCase() : '';
+                                                    return blockPid === searchPid;
+                                                }).map(block => (
+                                                    <div key={block.hash} className="visitation-item" style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #f1f5f9' }}>
+                                                        <div className="visitation-main">
+                                                            <h4 style={{ margin: 0, color: '#0f172a' }}>{block.data.hospital || "Unknown Hospital"}</h4>
+                                                            <span className="visitation-dept" style={{ fontSize: '0.85rem', color: '#64748b' }}>{block.data.department || "General Practice"}</span>
+                                                        </div>
+                                                        <div className="visitation-meta" style={{ textAlign: 'right' }}>
+                                                            <span className="visitation-date" style={{ display: 'block', fontSize: '0.85rem', color: '#94a3b8' }}>{new Date(block.timestamp).toLocaleDateString()}</span>
+                                                            <span className="status-badge" style={{ display: 'inline-block', fontSize: '0.75rem', padding: '0.2rem 0.5rem', background: '#dcfce7', color: '#166534', borderRadius: '4px' }}>{block.data.diagnosis}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
