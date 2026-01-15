@@ -24,6 +24,59 @@ const HospitalDashboard = ({ handleLogout }) => {
 
     const doctor = JSON.parse(localStorage.getItem('userProfile')) || { name: 'Doctor' };
 
+    // Profile Form State
+    const [formData, setFormData] = useState({
+        username: doctor.username || doctor.name || '',
+        email: doctor.email || '',
+        hospital: doctor.hospital || '',
+        specialization: doctor.specialization || '',
+        licenseNumber: doctor.licenseNumber || ''
+    });
+    const [saveStatus, setSaveStatus] = useState('');
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSaveProfile = async (e) => {
+        e.preventDefault();
+        setSaveStatus('Saving...');
+
+        try {
+            const response = await fetch(`${API_URL}/update-profile`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: formData.email, // Identifier
+                    name: formData.username,
+                    hospital: formData.hospital,
+                    specialisation: formData.specialization, // Backend uses British/American mix sometimes, standardized to 'specialisation' in payload based on server.js
+                    licenseNumber: formData.licenseNumber
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Update local storage
+                const updatedUser = { ...doctor, ...data.user };
+                localStorage.setItem('userProfile', JSON.stringify(updatedUser));
+                setSaveStatus('Profile updated successfully!');
+            } else {
+                setSaveStatus(data.message || 'Failed to update profile.');
+            }
+        } catch (error) {
+            console.error('Update Error:', error);
+            setSaveStatus('Server error. Please try again.');
+        }
+
+        setTimeout(() => setSaveStatus(''), 3000);
+    };
+
     // --- ACTIONS ---
 
     const fetchChain = async () => {
@@ -540,8 +593,78 @@ const HospitalDashboard = ({ handleLogout }) => {
                     {activeTab === 'settings' && (
                         <div className="settings-container">
                             <div className="settings-card">
-                                <h3 className="section-header-title">Hospital Account</h3>
-                                <button onClick={handleLogout} className="logout-btn">Log Out</button>
+                                <h3 className="section-header-title">Settings & Profile</h3>
+                                <p className="section-header-desc">Manage your account and hospital details.</p>
+
+                                <form onSubmit={handleSaveProfile} className="settings-form">
+                                    <div className="form-group">
+                                        <label>Full Name / Username</label>
+                                        <input
+                                            type="text"
+                                            name="username"
+                                            value={formData.username}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Email Address</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={formData.email}
+                                            disabled // Email is usually immutable or requires special flow
+                                            className="form-input"
+                                            style={{ background: '#f1f5f9', cursor: 'not-allowed' }}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Specialization</label>
+                                        <input
+                                            type="text"
+                                            name="specialization"
+                                            value={formData.specialization}
+                                            onChange={handleInputChange}
+                                            placeholder="e.g. Cardiologist"
+                                            className="form-input"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>License Number</label>
+                                        <input
+                                            type="text"
+                                            name="licenseNumber"
+                                            value={formData.licenseNumber}
+                                            onChange={handleInputChange}
+                                            placeholder="e.g. STR-12345678"
+                                            className="form-input"
+                                        />
+                                    </div>
+                                    <div className="form-group full-width">
+                                        <label>Hospital / Clinic Name</label>
+                                        <input
+                                            type="text"
+                                            name="hospital"
+                                            value={formData.hospital}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                        />
+                                    </div>
+
+                                    {saveStatus && <div className="save-status">{saveStatus}</div>}
+
+                                    <button type="submit" className="save-btn">
+                                        Save Changes
+                                    </button>
+                                </form>
+
+                                <div className="settings-divider"></div>
+
+                                <div className="account-actions">
+                                    <button onClick={handleLogout} className="logout-btn">
+                                        Log Out
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
