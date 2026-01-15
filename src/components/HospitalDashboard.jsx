@@ -392,7 +392,7 @@ const HospitalDashboard = ({ handleLogout }) => {
                     <button className={`sidebar-link ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>Dashboard</button>
                     <button className={`sidebar-link ${activeTab === 'patients' ? 'active' : ''}`} onClick={() => setActiveTab('patients')}>History</button>
                     <button className={`sidebar-link ${activeTab === 'upload' ? 'active' : ''}`} onClick={() => setActiveTab('upload')}>Upload Records</button>
-                    <button className={`sidebar-link ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>Settings</button>
+                    <button className={`sidebar-link ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>Settings & Profile</button>
                 </nav>
             </aside>
 

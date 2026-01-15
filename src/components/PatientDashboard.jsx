@@ -199,7 +199,7 @@ const PatientDashboard = ({ handleLogout }) => {
                         className={`sidebar-link ${activeTab === 'settings' ? 'active' : ''}`}
                         onClick={() => setActiveTab('settings')}
                     >
-                        Settings
+                        Settings & Profile
                     </button>
                 </nav>
             </aside>
