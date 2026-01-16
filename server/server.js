@@ -269,6 +269,7 @@ router.post('/signin', async (req, res) => {
                 phoneNumber: user.phoneNumber,
                 address: user.address,
                 specialization: user.specialization,
+                licenseNumber: user.licenseNumber,
                 hospital: user.hospital
             }
         });
