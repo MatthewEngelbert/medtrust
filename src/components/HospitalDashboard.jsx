@@ -635,9 +635,9 @@ const HospitalDashboard = ({ handleLogout }) => {
                                             type="text"
                                             name="licenseNumber"
                                             value={formData.licenseNumber}
-                                            onChange={handleInputChange}
-                                            placeholder="e.g. STR-12345678"
+                                            disabled // License Number is immutable
                                             className="form-input"
+                                            style={{ background: '#f1f5f9', cursor: 'not-allowed' }}
                                         />
                                     </div>
                                     <div className="form-group full-width">
